@@ -31,7 +31,18 @@ dupa fiecare step de X pipsi se deschide cate open trade X1 sl=0,tp=0
 care modifica sl pentru poztia n+1 si modifica stop loss ul sub poztia n+1
 
 Youtube uitate tutoeial 103 simple buy grid
+
 2
+17.10.23 acasa
+
+Create conditia de range adica positionstotal ==4//ne gandim
+close all positions
+ daca numarul total al pozitiilor este mai mare sau egal cu 4 
+si pretul curent scade sub stop lossul anume InpStopLoss inchide toate pozitiile deschise
+=> nu mai avem nevoie de stop loss pentru fiecare pozitie=> numia mutam nimic
+generalizat
+
+ramane de vazut la adaugarea medierei deoarece noi nu vrem sa inchidem toate pozitile in cazul medierii ok!!
 3
 4
 5
