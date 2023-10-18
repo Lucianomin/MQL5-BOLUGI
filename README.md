@@ -43,7 +43,21 @@ si pretul curent scade sub stop lossul anume InpStopLoss inchide toate pozitiile
 generalizat
 
 ramane de vazut la adaugarea medierei deoarece noi nu vrem sa inchidem toate pozitile in cazul medierii ok!!
+
 3
+!18.10.2023
+Am implementat condidtia de range cu ajutorul functiei  PositionSelectByticket PositionGetDouble, PositionGetinteger
+Am calculat range price-ul si close priceul 
+
+		folosim for(bucla) pentru a itera pozitiile deschise dupa tichetul lor #i
+	
+	==>Versiune BETA!!! gata
+	
+	->trebuie integrata varianta pentru sell
+	->lot procent si lot aditional
+	->stop loss procent 
+ !!!am functia numara prob doar daca este BUY!!!
+
 4
 5
 6
