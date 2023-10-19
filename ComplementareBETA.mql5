@@ -25,6 +25,14 @@ input double InpLots=0.01; //fixed/additional lots/percent
 
 input group "---->Range Inputs(Complementare)<----";
 
+enum COMPLEMENTARE_MODE
+        {
+         COMPLEMENTARE_BUY,
+         COMPLEMENTARE_SELL
+        };
+        
+input COMPLEMENTARE_MODE InpComplementareMode= COMPLEMENTARE_BUY; //Complementare Mode
+//stop loss mode
 enum SL_MODE_ENUM
   {
    SL_MODE_FIXED, //Fixed /pips
@@ -33,8 +41,28 @@ enum SL_MODE_ENUM
   
 input SL_MODE_ENUM InpSlMode = SL_MODE_FIXED; //StopLoss Mode
 
-input int InpStopLoss=100; // InpStopLoss pips/percent
-input int InpStepRange=100; // InpStepRange in pips
+input int InpStopLoss=100; // InpStopLoss (pips / percent)
+input int InpStepC=100; // InpStepC (pips)
+
+
+input group "---->Range Inputs(Mediere)<----";
+enum MEDIERE_MODE
+        {
+         MEDIERE_BUY,
+         MEDIERE_SELL
+        };
+        
+input MEDIERE_MODE InpMediereMode= MEDIERE_BUY; //Mediere Mode
+
+enum STEP_MODE
+  {
+   STEP_FIXED,
+   STEP_PERCENT
+  };
+
+input STEP_MODE InpStepModeM= STEP_FIXED; //Step Mode
+
+input int InpStepM=100; //InpStepM (pips / percent)
 //+------------------------------------------------------------------+
 //| Global D                                                        |
 //+------------------------------------------------------------------+
@@ -85,7 +113,7 @@ void OnTick()
    if(signal=="buy")
    {
       trade.Buy(InpLots,NULL,ask,0,0,NULL);
-      NextBuyPrice=ask+InpStepRange*_Point;
+      NextBuyPrice=ask+InpStepC*_Point;
    
    }
    
@@ -181,7 +209,26 @@ void OnTick()
       Alert("Stop Loss lower than 0 or greater than 5%");
       return false;
      }
-     
+     if(InpStepModeM==STEP_FIXED && (InpStepM<=0 || InpStepM>=1000))
+     {
+      Alert("Step Mediere lower than 0 or greater than 1000 pips");
+      return false;
+     }
+     if(InpStepModeM==STEP_PERCENT && (InpStepM<=0 || InpStepM>=5))
+     {
+      Alert("Step Mediere lower than 0 or greater than 5%");
+      return false;
+     }
+     if(InpStepC<=0)
+     {
+     Alert("InpStepC <=0");
+     return false;
+     }
+     if(InpStepM<=0)
+     {
+     Alert("Step Mediere <=0");
+      return false;
+   }
   return true;
 }
 //Check entry signal
