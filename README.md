@@ -72,6 +72,20 @@ am iterat in for plecadn de la numarul de ticketul bun adica
 ramane dynamyc lots si stop loss dynamic si 
 	PT SHORT POSITION
 5
+19.10.2023
+
+InpStepM
+
+Complementarea SELL: Unde Incepe? InpStepM+InpStepC
+
+enum -->Complementare Buy 
+     -->Complementare SELL 
+     -->Mediere Buy
+     -->Mediere Sell
+     Implemenatat input mode complemenatre mediere toate StepC StepM... 
+	Verificarea Inputurilor
+	Ramane calcularea dinamyc Lots 
+	Calcularea Step si stop loss percent
 6
 7
 8
