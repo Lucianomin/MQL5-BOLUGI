@@ -42,6 +42,7 @@ MqlRates PriceInfo[];
 MqlTick currTick;
 CTrade trade;
 string signal="";
+int PositionNumber=0;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -67,24 +68,13 @@ void OnTick()
   {
   //static next buy price
   static double NextBuyPrice;
-  static int PositionNumber=0;
-  bool RangeCondition=false;
+  
   double ask =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK),_Digits);
   //sort
   ArraySetAsSeries(PriceInfo,true);
   int PriceData= CopyRates(_Symbol,_Period,0,3,PriceInfo);
-  /*
-  if(PositionNumber==PositionsTotal())
-  {
-  
-   trade.PositionOpen(_Symbol,ORDER_TYPE_BUY,InpLots,ask,0,0,NULL);
-   PositionNumber++;
-  }
-  
-   if(currTick.ask==ask+100*_Point)
-   {
-   trade.PositionOpen(_Symbol,ORDER_TYPE_BUY,InpLots,currTick.ask,0,0,NULL);
-   }*/
+ 
+ 
    if(PositionsTotal()==0)
    {NextBuyPrice=0;}
    
@@ -95,7 +85,6 @@ void OnTick()
    if(signal=="buy")
    {
       trade.Buy(InpLots,NULL,ask,0,0,NULL);
-      PositionNumber++;
       NextBuyPrice=ask+InpStepRange*_Point;
    
    }
@@ -109,28 +98,35 @@ void OnTick()
    //RangeCondition=true;
    //Print("Ask",ask);
    int totalPositions = PositionsTotal();
-
    double RangePrice = 0.0; // Initialize with a default value
+   Print("---->",PositionNumber);
+   
+   int OpenBuySellTrades=PositionNumber;
 
-      for (int i = 0; i < totalPositions+2; i++) 
-      {
+      for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
+      { 
+      //Alert("ticket",i);
          if (PositionSelectByTicket(i)) 
          {
             if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) 
                {
-                  RangePrice = PositionGetDouble(POSITION_PRICE_OPEN);
+                  
+                  RangePrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
                   //Print("RangePrice                   ",RangePrice);
                }
          }
+         
       }
-
+   
    Print("RangePrice ",RangePrice);
    double ClosePrice=RangePrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+   Comment("ClosePrice ",ClosePrice);
    Print("ClosePrice ",ClosePrice);
       // daca atinge stop loss-ul
       if(ask<=ClosePrice)
          {
           CloseAllPositions();// inchide toate pozitiile cand
+          
           }
           
       }
@@ -207,9 +203,9 @@ void CloseAllPositions()
 {
    for(int i=PositionsTotal()-1;i>=0;i--)
    {
-   ulong ticket=PositionGetTicket(i);
-   
-   trade.PositionClose(ticket,i);
+   ulong ticket=PositionGetTicket(i);//get ticket
+   trade.PositionClose(ticket,i);//close
+   PositionNumber=PositionNumber+2;
    
    }
 
