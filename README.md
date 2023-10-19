@@ -63,6 +63,14 @@ Am calculat range price-ul si close priceul
 for merge pana la totalul pozitiolor posibile deschise deoarece ticket numberul nu se reseteaza niciodata
 trebuiie aflat maximul!!!
 
+19.10.2023
+am iterat in for plecadn de la numarul de ticketul bun adica
+
+	numarul buy + numarul close si am mers pana la acelasi numar plus totalul pozitilor
+	
+	pt o iterare optima si rapida
+ramane dynamyc lots si stop loss dynamic si 
+	PT SHORT POSITION
 5
 6
 7
