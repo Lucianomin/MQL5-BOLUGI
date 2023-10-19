@@ -59,6 +59,10 @@ Am calculat range price-ul si close priceul
  !!!am functia numara prob doar daca este BUY!!!
 
 4
+19.10.2023
+for merge pana la totalul pozitiolor posibile deschise deoarece ticket numberul nu se reseteaza niciodata
+trebuiie aflat maximul!!!
+
 5
 6
 7
