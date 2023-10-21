@@ -87,6 +87,89 @@ enum -->Complementare Buy
 	Ramane calcularea dinamyc Lots 
 	Calcularea Step si stop loss percent
 6
+21.10.2023
+//lucram la dynamic lot function
+
+ if(InpComplementareMode==COMPLEMENTARE_BUY)
+  {
+  //static next buy price
+  static double NextBuyPrice;
+  
+  double ask =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK),_Digits);
+  //sort
+  ArraySetAsSeries(PriceInfo,true);
+  int PriceData= CopyRates(_Symbol,_Period,0,3,PriceInfo);
+ 
+ 
+   if(PositionsTotal()==0)
+   {NextBuyPrice=0;}
+   
+   signal=CheckEntrySignal();
+   
+   if(ask>=NextBuyPrice)
+   {
+   if(signal=="buy")
+   {
+      //double sl=ask-InpStepC*_Point;
+      //double Lots= CalculateLots(InpLots,sl);
+      trade.Buy(InpLots,NULL,ask,0,0,NULL);
+      NextBuyPrice=ask+InpStepC*_Point;
+   
+   }
+   }
+   //chart output
+   Comment("Ask",ask,"\n","NextBuyPrice: ",NextBuyPrice);
+  // Print("Ask",ask);
+   // range condition not static
+   if(PositionsTotal()>=4)
+   {
+   //RangeCondition=true;
+   //Print("Ask",ask);
+   int totalPositions = PositionsTotal();
+   double RangePrice = 0.0; // Initialize with a default value
+   Print("---->",PositionNumber);
+   
+   int OpenBuySellTrades=PositionNumber;
+
+      for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
+      { 
+      //Alert("ticket",i);
+         if (PositionSelectByTicket(i)) 
+         {
+            if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) 
+               {
+                  
+                  RangePrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  //Print("RangePrice                   ",RangePrice);
+               }
+         }
+         
+      }
+   
+   Print("RangePrice ",RangePrice);
+   double ClosePrice=RangePrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+   Comment("ClosePrice ",ClosePrice);
+   Print("ClosePrice ",ClosePrice);
+      // daca atinge stop loss-ul
+      if(ask<=ClosePrice)
+         {
+          CloseAllPositions();// inchide toate pozitiile cand
+          
+          }
+          
+      }
+     //////// double RangeSellPrice=0.0;
+    if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) 
+               {
+                  
+                  RangeSellPrice = NormalizeDouble(PositionGetDouble(POSITION_PRICE_OPEN),_Digits);
+                  //Print("RangePrice                   ",RangePrice);
+               }  
+
+
+////double CloseSellPrice=RangeSellPrice+InpStopLoss*_Point; //calculeaza nivelul de stop loss
+
+
 7
 8
 9
