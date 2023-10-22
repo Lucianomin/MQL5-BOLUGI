@@ -171,5 +171,49 @@ enum -->Complementare Buy
 
 
 7
+
+//22.10.2023
+
+double CloseBuyPrice=RangeBuyPrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+
+//Comment("ClosePrice ",ClosePrice);
+  // Print("ClosePrice ",ClosePrice);
+      // daca atinge stop loss-ul
+
+//Alert("closebuy",CloseBuyPrice);
+
+if(InpSlMode==SL_MODE_FIXED)
+    {
+    double CloseBuyPrice=RangeBuyPrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+    
+    if(ask<=CloseBuyPrice)
+         {
+         //pentru fixed
+         Alert("closebuy",CloseBuyPrice);
+          CloseBuyPositions();// inchide toate pozitiile cand
+         // CloseAllPositions();
+          }
+    }
+   else
+     {
+     // pentru procent
+      double CloseBuyPrice=RangeBuyPrice-(InpStopLoss*InpStepC)*_Point; //procent fata de pas Complemenatre
+      
+      if(ask<=CloseBuyPrice)
+         {
+         Alert("closebuy",CloseBuyPrice);
+          CloseBuyPositions();// inchide toate pozitiile cand
+         // CloseAllPositions();
+         
+
+
+//SELL POSIITONS
+
+static double NextSellPrice;
+
+double bid =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID),_Digits);
+
+// == cu stop lossul sau mai mare respectiv mai mic
+
 8
 9
