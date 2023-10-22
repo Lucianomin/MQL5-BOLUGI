@@ -214,6 +214,9 @@ static double NextSellPrice;
 double bid =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID),_Digits);
 
 // == cu stop lossul sau mai mare respectiv mai mic
-
+23.10.2023 COMPLEMENTARE BETA working!!!!!
 8
 9
+10
+11
+12
