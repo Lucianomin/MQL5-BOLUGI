@@ -36,8 +36,8 @@ input COMPLEMENTARE_MODE InpComplementareMode= COMPLEMENTARE_BUY; //Complementar
 //stop loss mode
 enum SL_MODE_ENUM
   {
-   SL_MODE_FIXED, //Fixed /pips
-   SL_MODE_PERCENT //Percent step
+   SL_MODE_FIXED, 
+   SL_MODE_PERCENT
   };
   
 input SL_MODE_ENUM InpSlMode = SL_MODE_FIXED; //StopLoss Mode
@@ -55,7 +55,7 @@ enum MEDIERE_MODE
         
 input MEDIERE_MODE InpMediereMode= MEDIERE_BUY; //Mediere Mode
 
-enum STEP_MODE
+/*enum STEP_MODE
   {
    STEP_FIXED,
    STEP_PERCENT
@@ -63,7 +63,7 @@ enum STEP_MODE
 
 input STEP_MODE InpStepModeM= STEP_FIXED; //Step Mode
 
-input int InpStepM=100; //InpStepM (pips / percent)
+input int InpStepM=100; //InpStepM (pips / percent)*/
 //+------------------------------------------------------------------+
 //| Global D                                                        |
 //+------------------------------------------------------------------+
@@ -128,8 +128,8 @@ void OnTick()
          {
           if(signal=="buy")
             {
-    
-         trade.Buy(InpLots,NULL,ask,0,0,NULL);
+         double Lots=CalculateLots(InpLots);
+         trade.Buy(Lots,NULL,ask,0,0,NULL);
          NextBuyPrice=ask+InpStepC*_Point;
    
             }
@@ -138,33 +138,32 @@ void OnTick()
   
          if(signal=="sell")
          {
-   
-         trade.Sell(InpLots,NULL,bid,0,0,NULL);
+         double Lots=CalculateLots(InpLots);
+         trade.Sell(Lots,NULL,bid,0,0,NULL);
          NextSellPrice=bid-InpStepC*_Point;
          }
   
          Comment("Ask",ask,"\n","NextBuyPrice: ",NextBuyPrice);
          Comment("Bid",bid,"\n","NextBuyPrice: ",NextSellPrice);
-      int TotalBuyPositions=0;
-      int TotalSellPositions=0;
+       int TotalBuyPositions=0;
+      Print("total buy before count ",TotalBuyPositions);
+    
       int OpenBuySellTrades=PositionBuyNumber+PositionSellNumber;
+      
       for(int i=OpenBuySellTrades;i<=OpenBuySellTrades+PositionsTotal()+2;i++)
       {
          if(PositionSelectByTicket(i))
          {
             if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY)
             {
+            
                TotalBuyPositions++;
-            }
-            if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_SELL)
-            {
-               TotalSellPositions++;
             }
          }
          
       }
       //buy positons
-      Print("total buy",TotalBuyPositions);
+      Print("total buy after count ",TotalBuyPositions);
    if(TotalBuyPositions>=4)
    {
    
@@ -176,7 +175,7 @@ void OnTick()
 
       for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+3; i++) //testat optim??? putem si mai departe aprox 180 de complementari
       { 
-      Alert("ticket",i);
+      //Alert("ticket",i);
          if (PositionSelectByTicket(i)) 
          {
             if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) 
@@ -192,6 +191,7 @@ void OnTick()
    
   Print("RangeBuyPrice ",RangeBuyPrice);
     //Print("RangeSellPrice ",RangeSellPrice);
+    
    double CloseBuyPrice=RangeBuyPrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
     Alert("closebuy",CloseBuyPrice);
    //Comment("ClosePrice ",ClosePrice);
@@ -201,6 +201,7 @@ void OnTick()
          {
          Alert("closebuy",CloseBuyPrice);
           CloseBuyPositions();// inchide toate pozitiile cand
+          TotalBuyPositions=0;
          // CloseAllPositions();
           }
           
@@ -208,6 +209,21 @@ void OnTick()
        
        ///sell posiitons
        
+       int TotalSellPositions=0;
+
+for(int i=OpenBuySellTrades;i<=OpenBuySellTrades+PositionsTotal()+2;i++)
+      {
+         if(PositionSelectByTicket(i))
+         {
+            if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_SELL)
+            {
+               TotalSellPositions++;
+            }
+         }
+         
+      }
+      
+       Print("total Sell",TotalSellPositions);
        if(TotalSellPositions>=4)
    {
    
@@ -243,7 +259,7 @@ void OnTick()
       if(bid>=CloseSellPrice)
          {
           CloseSellPositions();// inchide toate pozitiile cand
-          
+          TotalSellPositions=0;
           }
           
       }
@@ -296,7 +312,7 @@ void OnTick()
       Alert("Stop Loss lower than 0 or greater than 5%");
       return false;
      }
-     if(InpStepModeM==STEP_FIXED && (InpStepM<=0 || InpStepM>=1000))
+     /*if(InpStepModeM==STEP_FIXED && (InpStepM<=0 || InpStepM>=1000))
      {
       Alert("Step Mediere lower than 0 or greater than 1000 pips");
       return false;
@@ -306,16 +322,18 @@ void OnTick()
       Alert("Step Mediere lower than 0 or greater than 5%");
       return false;
      }
-     if(InpStepC<=0)
-     {
-     Alert("InpStepC <=0");
-     return false;
-     }
      if(InpStepM<=0)
      {
      Alert("Step Mediere <=0");
       return false;
    }
+     */
+     if(InpStepC<=0)
+     {
+     Alert("InpStepC <=0");
+     return false;
+     }
+     
   return true;
 }
 //Check entry signal
@@ -375,7 +393,7 @@ void CloseSellPositions()
 }
 
 //calculatelots
-double CalculateLots(double lots, double slDistance){
+double CalculateLots(double lots){
 
    lots=0.0;
    if(InpLotMode==LOT_MODE_FIXED)
@@ -387,17 +405,18 @@ double CalculateLots(double lots, double slDistance){
          double tickSize=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE);
          double tickValue=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
          double volumeStep=SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
-         
+         Print("TICKsize", tickSize,"tickValue",tickValue,"volumestep",volumeStep);
          if(tickSize==0 || tickValue==0 || volumeStep==0)
          {
          Print(__FUNCTION__,"Can not calculate ticksize tickvalue volumestep");
          return 0;
          }
-         double riskMoney=AccountInfoDouble(ACCOUNT_EQUITY)*InpLots*0.01;
+         double riskMoney=AccountInfoDouble(ACCOUNT_BALANCE)*InpLots*0.01;
+         Print("risk Money",riskMoney);
          // pentru complementare
-         if(InpComplementareMode==COMPLEMENTARE_BUY || InpComplementareMode==COMPLEMENTARE_SELL)
+         if(InpComplementareMode==COMPLEMENTARE_BUY || InpComplementareMode==COMPLEMENTARE_SELL || InpComplementareMode==COMPLEMENTARE_BUY_SELL)
          {
-            double moneyVolumeStep= (slDistance/tickSize) * tickValue *volumeStep;
+            double moneyVolumeStep= ((1250*_Point)/tickSize) * tickValue *volumeStep;
             lots=MathFloor(riskMoney/moneyVolumeStep)*volumeStep;
          }
          
@@ -432,8 +451,8 @@ void Complementare_Buy()
    if(signal=="buy")
    {
       //double sl=ask-InpStepC*_Point;
-      //double Lots= CalculateLots(InpLots,sl);
-      trade.Buy(InpLots,NULL,ask,0,0,NULL);
+      double Lots= CalculateLots(InpLots);
+      trade.Buy(Lots,NULL,ask,0,0,NULL);
       NextBuyPrice=ask+InpStepC*_Point;
    
    }
@@ -505,8 +524,8 @@ void Complementare_Sell()
    {
    
       //double sl=ask-InpStepC*_Point;
-      //double Lots= CalculateLots(InpLots,sl);
-      trade.Sell(InpLots,NULL,bid,0,0,NULL);
+      double Lots= CalculateLots(InpLots);
+      trade.Sell(Lots,NULL,bid,0,0,NULL);
       NextSellPrice=bid-InpStepC*_Point;
       Print("NextSellPrice",NextSellPrice);
    }
@@ -545,7 +564,7 @@ void Complementare_Sell()
    Comment("ClosePrice ",ClosePrice);
    Print("ClosePrice ",ClosePrice);
       // daca atinge stop loss-ul
-      if(bid>=ClosePrice)
+      if(bid==ClosePrice)
          {
           CloseAllPositions();// inchide toate pozitiile cand
           
