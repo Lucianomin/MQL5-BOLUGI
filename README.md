@@ -216,6 +216,21 @@ double bid =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID),_Digits);
 // == cu stop lossul sau mai mare respectiv mai mic
 23.10.2023 COMPLEMENTARE BETA working!!!!!
 8
+25.10.2023
+if(TrailMode==true)
+{
+
+
+if(ask>=RangePrice+InpTrailStop)
+	{
+		RangePrice=RangePrice+InpTrailStop;
+	}
+}
+n intra in bucla deloc
+seteaza pretul rau
+nu retinr val max
+NUU
+Am incercat min si amx fara rezulatat
 9
 10
 11
