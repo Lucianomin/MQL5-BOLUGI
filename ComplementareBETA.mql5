@@ -44,6 +44,8 @@ input SL_MODE_ENUM InpSlMode = SL_MODE_FIXED; //StopLoss Mode
 
 input int InpStopLoss=100; // InpStopLoss (pips / percent)
 input int InpStepC=100; // InpStepC (pips)
+input bool TrailMode=true; //TrailMode (true/false)
+input int InpTrailStop=20; //InpTrailStop (pips)
 
 
 input group "---->Range Inputs(Mediere)<----";
@@ -76,6 +78,7 @@ int PositionBuyNumber=0;
 int PositionSellNumber=0;
 int TotalBuyPositions=0;
 int TotalSellPositions=0;
+double MaxClose=0;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -333,18 +336,37 @@ void Complementare_Buy()
          }
          
       }
-   
-   Print("RangePrice ",RangePrice);
-   double ClosePrice=RangePrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
-   Comment("ClosePrice ",ClosePrice);
-   Print("ClosePrice ",ClosePrice);
-      // daca atinge stop loss-ul
-      if(ask<=ClosePrice)
+      double TrailPrice=RangePrice+InpTrailStop*_Point;
+      NormalizeDouble(TrailPrice,_Digits);
+      double ClosePrice=RangePrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+      NormalizeDouble(ClosePrice,_Digits);
+      //Print("RangePricebeforeTRail ",RangePrice);
+       
+       //Print("RangePricebefore->>> ",ClosePrice);
+      if(TrailMode==true)
+      {
+         while(ask>=TrailPrice)
+	      {
+	       ClosePrice=ClosePrice+InpTrailStop*_Point;
+		    TrailPrice=TrailPrice+InpTrailStop*_Point; 
+		    if(ClosePrice>=MaxClose){MaxClose=ClosePrice;}
+		     //Print("print ---->",ask);
+           
+	      }
+	     Print("MaxClose   ",MaxClose);
+      }
+      if(ask<=MaxClose)
          {
           CloseAllPositions();// inchide toate pozitiile cand
           
           }
-          
+      Print("TrailPrice ",TrailPrice);
+    Print("ClosePrice ",ClosePrice);
+  // Print("RangePrice ",RangePrice);
+   //Comment("ClosePrice ",ClosePrice);
+  
+      // daca atinge stop loss-ul
+      
       }
       
 }
