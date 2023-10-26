@@ -6,7 +6,7 @@
 //| Includes                                                         |
 //+------------------------------------------------------------------+
 #include <Trade/Trade.mqh>
-
+#define MAX_DOUBLE 1.79769e+308
 //+------------------------------------------------------------------+
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
@@ -44,7 +44,7 @@ input SL_MODE_ENUM InpSlMode = SL_MODE_FIXED; //StopLoss Mode
 
 input int InpStopLoss=100; // InpStopLoss (pips / percent)
 input int InpStepC=100; // InpStepC (pips)
-input bool TrailMode=true; //TrailMode (true/false)
+input bool InpTrailMode=true; //TrailMode (true/false)
 input int InpTrailStop=20; //InpTrailStop (pips)
 
 
@@ -79,6 +79,7 @@ int PositionSellNumber=0;
 int TotalBuyPositions=0;
 int TotalSellPositions=0;
 double MaxClose=0;
+double MaxSellClose=9999;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -87,6 +88,8 @@ int OnInit()
    if(!CheckInputs())
    {return INIT_PARAMETERS_INCORRECT;}
    return(INIT_SUCCEEDED);
+   //Complementare_MaxClose(MaxClose);
+   //Print("MaxClose->",MaxClose);
   }
   
 //+------------------------------------------------------------------+
@@ -343,7 +346,7 @@ void Complementare_Buy()
       //Print("RangePricebeforeTRail ",RangePrice);
        
        //Print("RangePricebefore->>> ",ClosePrice);
-      if(TrailMode==true)
+      if(InpTrailMode==true)
       {
          while(ask>=TrailPrice)
 	      {
@@ -354,11 +357,17 @@ void Complementare_Buy()
            
 	      }
 	     Print("MaxClose   ",MaxClose);
+	     Draw_HLine(MaxClose);
       }
+      else
+        {
+         MaxClose=ClosePrice;
+        }
+        Draw_HLine(MaxClose);
       if(ask<=MaxClose)
          {
           CloseAllPositions();// inchide toate pozitiile cand
-          
+          Delete_HLine();
           }
       Print("TrailPrice ",TrailPrice);
     Print("ClosePrice ",ClosePrice);
@@ -429,16 +438,38 @@ void Complementare_Sell()
          
       }
    
-   Print("RangePrice ",RangePrice);
-   double ClosePrice=RangePrice+InpStopLoss*_Point; //calculeaza nivelul de stop loss
-   Comment("ClosePrice ",ClosePrice);
-   Print("ClosePrice ",ClosePrice);
-      // daca atinge stop loss-ul
-      if(bid==ClosePrice)
+      double TrailPrice=RangePrice-InpTrailStop*_Point;
+      NormalizeDouble(TrailPrice,_Digits);
+      double ClosePrice=RangePrice+InpStopLoss*_Point; //calculeaza nivelul de stop loss
+      NormalizeDouble(ClosePrice,_Digits);
+      //Print("RangePricebeforeTRail ",RangePrice);
+       
+       //Print("RangePricebefore->>> ",ClosePrice);
+      if(InpTrailMode==true)
+      {
+         while(bid<=TrailPrice)
+	      {
+	       ClosePrice=ClosePrice-InpTrailStop*_Point;
+		    TrailPrice=TrailPrice-InpTrailStop*_Point; 
+		    if(ClosePrice<=MaxSellClose){MaxSellClose=ClosePrice;}
+		     //Print("print ---->",ask);
+           
+	      }
+	     Print("MaxSellClose   ",MaxSellClose);
+	     Draw_HLine(MaxSellClose);
+      }
+      else
+        {
+         MaxSellClose=ClosePrice;
+        }
+        Draw_HLine(MaxSellClose);
+      if(bid==MaxClose)
          {
           CloseAllPositions();// inchide toate pozitiile cand
-          
+          Delete_HLine();
           }
+      Print("TrailPrice ",TrailPrice);
+    Print("ClosePrice ",ClosePrice);
           
       }
       
@@ -565,5 +596,47 @@ static double NextBuyPrice,NextSellPrice;
           }
           
       }
+
+}
+void Draw_HLine(double stopLossPrice) {
+    // Define the stopLossObjectName
+    string stopLossObjectName = "StopLossLine";
+    
+    // Color and other properties
+    int stopLossColor = clrRed;
+    
+    // Create the horizontal line
+    if (ObjectCreate(_Symbol,stopLossObjectName,OBJ_HLINE,0,0,0)) 
+    {
+        ObjectSetInteger(0, stopLossObjectName, OBJPROP_RAY_RIGHT, false);
+        ObjectSetInteger(0, stopLossObjectName, OBJPROP_RAY_LEFT, false);
+        ObjectSetInteger(0, stopLossObjectName, OBJPROP_COLOR, stopLossColor);
+        ObjectSetInteger(0, stopLossObjectName, OBJPROP_WIDTH, 2); // Line width
+        ObjectMove(_Symbol,stopLossObjectName,0,0,stopLossPrice);
+        ObjectSetDouble(0, stopLossObjectName, OBJPROP_PRICE, stopLossPrice);
+    }
+}
+
+//delete
+void Delete_HLine() {
+    // Define the stopLossObjectName to be deleted
+    string stopLossObjectName = "StopLossLine";
+    
+    // Check if the object exists and delete it
+    if (ObjectCreate(0, stopLossObjectName, OBJ_TREND, 0, 0, 0)) {
+        ObjectDelete(0, stopLossObjectName);
+    }
+
+}
+void Complementare_MaxClose(double x)
+{
+   if(InpComplementareMode==COMPLEMENTARE_BUY)
+   {
+   MaxClose=0;
+   }
+   else if(InpComplementareMode==COMPLEMENTARE_SELL)
+     {
+      MaxClose=99999;
+     }
 
 }
