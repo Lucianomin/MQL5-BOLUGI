@@ -486,11 +486,15 @@ static double NextBuyPrice,NextSellPrice;
          ArraySetAsSeries(PriceInfo,true);
          int PriceData= CopyRates(_Symbol,_Period,0,3,PriceInfo);
  
- 
-         if(PositionsTotal()==0)
+         if(TotalBuyPositions==0)
+         {NextBuyPrice=0;}
+         if(TotalSellPositions==0)
+         {NextSellPrice=0;}
+         
+         /*if(PositionsTotal()==0)
          {NextBuyPrice=0;
          NextSellPrice=0;
-         }
+         }*/
    
          signal=CheckEntrySignal();
    
@@ -545,19 +549,42 @@ static double NextBuyPrice,NextSellPrice;
          }
          
       }
-   
-   double CloseBuyPrice=RangeBuyPrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
-   
-      // daca atinge stop loss-ul
-      if(ask<=CloseBuyPrice)
-         {
-         
-          CloseBuyPositions();// inchide toate pozitiile cand
-          TotalBuyPositions=0;
-         
-          }
-          
+   //trailing si drawing
+   double TrailBuyPrice=RangeBuyPrice+InpTrailStop*_Point;
+      NormalizeDouble(TrailBuyPrice,_Digits);
+      double CloseBuyPrice=RangeBuyPrice-InpStopLoss*_Point; //calculeaza nivelul de stop loss
+      NormalizeDouble(CloseBuyPrice,_Digits);
+      //Print("RangePricebeforeTRail ",RangePrice);
+       
+       //Print("RangePricebefore->>> ",ClosePrice);
+      if(InpTrailMode==true)
+      {
+         while(ask>=TrailBuyPrice)
+	      {
+	       CloseBuyPrice=CloseBuyPrice+InpTrailStop*_Point;
+		    TrailBuyPrice=TrailBuyPrice+InpTrailStop*_Point; 
+		    if(CloseBuyPrice>=MaxClose){MaxClose=CloseBuyPrice;}
+		     //Print("print ---->",ask);
+           
+	      }
+	     Print("MaxClose   ",MaxClose);
+	     //Draw_HLine(MaxClose);
       }
+      else
+        {
+         MaxClose=CloseBuyPrice;
+        }
+        Draw_HLine(MaxClose);
+      if(ask<=MaxClose)
+         {
+          CloseBuyPositions();// inchide toate pozitiile cand
+          Delete_HLine();
+          TotalBuyPositions=0;
+          }
+      Print("TrailPrice ",TrailBuyPrice);
+    Print("ClosePrice ",CloseBuyPrice);
+       }
+       
        
        ///sell posiitons
        if(TotalSellPositions>=4)
@@ -585,15 +612,39 @@ static double NextBuyPrice,NextSellPrice;
          
       }
 
-   double CloseSellPrice=RangeSellPrice+InpStopLoss*_Point; //calculeaza nivelul de stop loss
-   
-
-      // daca atinge stop loss-ul
-      if(bid>=CloseSellPrice)
+   double TrailSellPrice=RangeSellPrice-InpTrailStop*_Point;
+      NormalizeDouble(TrailSellPrice,_Digits);
+      double CloseSellPrice=RangeSellPrice+InpStopLoss*_Point; //calculeaza nivelul de stop loss
+      NormalizeDouble(CloseSellPrice,_Digits);
+      //Print("RangePricebeforeTRail ",RangePrice);
+       
+       //Print("RangePricebefore->>> ",ClosePrice);
+      if(InpTrailMode==true)
+      {
+         while(bid<=TrailSellPrice)
+	      {
+	       CloseSellPrice=CloseSellPrice-InpTrailStop*_Point;
+		    TrailSellPrice=TrailSellPrice-InpTrailStop*_Point; 
+		    if(CloseSellPrice<=MaxSellClose){MaxSellClose=CloseSellPrice;}
+		     //Print("print ---->",ask);
+           
+	      }
+	     Print("MaxSellClose   ",MaxSellClose);
+	     //Draw_HLine(MaxSellClose);
+      }
+      else
+        {
+         MaxSellClose=CloseSellPrice;
+        }
+        Draw_HLine(MaxSellClose);
+      if(bid>=MaxSellClose)
          {
           CloseSellPositions();// inchide toate pozitiile cand
+          Delete_HLine();
           TotalSellPositions=0;
           }
+      Print("TrailPrice ",TrailSellPrice);
+    Print("ClosePrice ",CloseSellPrice);
           
       }
 
