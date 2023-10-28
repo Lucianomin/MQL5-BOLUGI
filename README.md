@@ -232,6 +232,31 @@ nu retinr val max
 NUU
 Am incercat min si amx fara rezulatat
 9
+29.10.23
+
+PriceStartM=RangeM0-PriceLevel1;
+if(ask<=PriceStartM) 
+            {
+   if(Level1==false)
+        {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"TP4");
+               Level1=true;
+               mediere=true;
+	}
+            }
+
+
+//original
+ if(Level1==false)
+        {
+        PriceStartM=RangeM0-PriceLevel1;
+               if(ask<=PriceStartM) 
+            {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"TP4");
+               Level1=true;
+               mediere=true;
+            }
+        }
 10
 11
 12
