@@ -52,15 +52,22 @@ input group "---->Range Inputs(Mediere)<----";
 enum MEDIERE_MODE
         {
          MEDIERE_BUY,
-         MEDIERE_SELL
+         MEDIERE_SELL,
+         MEDIERE_BUY_SELL
         };
         
 input MEDIERE_MODE InpMediereMode= MEDIERE_BUY; //Mediere Mode
 input int InpRangeM=1000;//InpRangeM (pips)
 input int InpDistZ=300;//InpDistZ (pips)
 input int InpDistTakeProfit=150;//InpDistTakeProfit (pips)
-
-
+input group "---->Tip Robot<----";
+enum BOLUGI_MODE
+         {
+         BOLUGI_LONG,
+         BOLUGI_SHORT,
+         BOLUGI_LONG_SHORT
+         };
+input BOLUGI_MODE InpBotMode= BOLUGI_LONG; //BOLUGI_MODE
 //+------------------------------------------------------------------+
 //| Global D                                                        |
 //+------------------------------------------------------------------+
@@ -97,7 +104,7 @@ double   lossZetCopie=0;
 
 int OnInit()
   {
-
+  
    return(INIT_SUCCEEDED);
   }
 
@@ -109,192 +116,20 @@ void OnDeinit(const int reason)
 
 void OnTick()
   {
-  
-         //Print("Pip Value: ", pipValue);
-         //Comment("Pip Value: ", pipValue);
-         /*double tickSize=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE);
-         double tickValue=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
-         double volumeStep=SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
-         Print("tickSize",tickSize,"tickValue",tickValue,"volumestep",volumeStep);
-         
-   if(InpComplementareMode==COMPLEMENTARE_BUY && medierebuy==false && complementarebuy==true)
-     {
-      Complementare_Buy();
-      Print("Complementare Buy ?");
-     }
-     else {Mediere_Buy();}
-      && medieresell==false && complementaresell==true
-     */
-     if(InpComplementareMode==COMPLEMENTARE_SELL )
-     {
-     Complementare_Sell();
-     }
-     Print("MedeiereSell: ",medieresell);
-     Print("ComplementareSell: ",complementaresell);
-     if(PositionsTotal()<=3+ContorM)//ContorM setam pe 0 el se modifica la fiecare deschidere de mediere maxim 7
-     {
-      double bid =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID),_Digits);
-      int totalPositions = PositionsTotal();
-      double RangeM0 = 0.0; // Initialize with a default value
-      double ValueZ = 0.0;
-       //Print("---->",PositionNumber);
    
-      int OpenBuySellTrades=PositionNumber+PositionMediereNumber;
-      Print("Start for: ",OpenBuySellTrades+MediereNumber*2);
-      Print("end for: ",OpenBuySellTrades+totalPositions+(MediereNumber*12)+2);
-      for (int i = OpenBuySellTrades+MediereNumber*2; i<OpenBuySellTrades+totalPositions+(MediereNumber*12)+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
-      { 
-      Alert("ticket",i);
-         if (PositionSelectByTicket(i)) 
-         {
-            if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) 
-               {
-                  RangeM0 = PositionGetDouble(POSITION_PRICE_OPEN); //pozitia 0 a rangeluiu
-                  Print("RangeM0->",RangeM0);
-                  //double positionProfit = NormalizeDouble(PositionGetDouble(POSITION_PROFIT),_Digits);
-                  //ValueZ += positionProfit;
-               }
-         }
-         
-      }
-      Print("RangeM0->",RangeM0);
-      //Print("Value for Z",ValueZ);
-      
-      //calculam pozitia next ord(pretul la care deschidem pozitia)
-      //7 nivele fibonacci
-      double PriceStartM=0.0;
-      double PriceLevel1=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(23.60*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel2=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(38.20*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel3=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(50.00*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel4=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(61.80*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel5=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(76.45*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel6=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(88.20*InpRangeM)/100*_Point,_Digits);
-      double PriceLevel7=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(100.00*InpRangeM)/100*_Point,_Digits);
-     
-        double PriceZ;
-        int decimalPlace=2;
-        double pipValue = CalculatePipValue()*0.01;
-        double VolumeZ=InpLots;       
-        PriceStartM=RangeM0+PriceLevel1;
-        PriceZ=PriceStartM-InpDistZ*_Point;
-        //Print("Pricez",PriceZ);
-        ValueZ=CalculateLossZetSell(PriceZ,VolumeZ);
-        //Print("Volum Mediere=",VolumeZ);
-        //Print("Value for Z",ValueZ);
-        VolumeZ=NormalizeDouble(ValueZ/InpDistZ/pipValue*10,decimalPlace);
-        //Print("Volum Mediere=",VolumeZ);
-       if(Level1==false) ///LEVEL 1 Fibonacci
-        {
-        
-        PriceStartM=RangeM0+PriceLevel1;
-        PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==0) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order1 & TP1");
-               Level1=true;
-               Print("Snitzel");
-               medieresell=true;
-               complementaresell=false;
-                ContorM=1;
-            }
-           //Print("Mediere DA sau NU",medieresell);
-        }
-         else if(Level1==true && Level2==false)///LEVEL 2 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel2-PriceLevel1);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==1) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order2 & TP2");
-               Level2=true;
-               ContorM=2;
-            }
-            
-         }
-         
-         else if(Level2==true && Level3==false)///LEVEL 3 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel3-PriceLevel2);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==2) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order3 &Tp3");
-               Level3=true;
-               ContorM=3;
-            }
-            
-         }
-        else if(Level3==true && Level4==false)///LEVEL 4 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel4-PriceLevel3);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==3) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order4 &Tp4");
-               Level4=true;
-               ContorM=4;
-            }
-            
-         }
-         else if(Level4==true && Level5==false)///LEVEL 5 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel5-PriceLevel4);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==4) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order5 &Tp5");
-               Level5=true;
-               ContorM=5;
-            }
-            
-         }
-         else if(Level5==true && Level6==false)///LEVEL 6 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel6-PriceLevel5);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==5) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order6 &Tp6");
-               Level6=true;
-               ContorM=6;
-            }
-            
-         }
-         else if(Level6==true && Level7==false)///LEVEL 7 Fibonacci
-         {
-         
-               PriceStartM=RangeM0+(PriceLevel7-PriceLevel6);
-               PriceZ=PriceStartM-InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(bid>=PriceStartM && ContorM==6) 
-            {
-               trade.Buy(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order7 &Tp7");
-               Level7=true;//ba e nevoie
-               ContorM=7;
-            }
-            //CloseBuyPositionsOnLastTakeProfit();
-         }
-         
-      Print("PriceStartM->",PriceStartM);
-      Print("LevelMediereContor",ContorM);
-      //Print("Contor Pozitii", ContorMC);
-      if(medieresell==true)
+  
+   if(InpBotMode==BOLUGI_LONG)
+   {
+   Bolugi_Long();
+   }
+   
+   if(InpBotMode==BOLUGI_SHORT)
       {
-      //CloseBuyPositionsOnLastTakeProfit();
-      CloseSellPositionsOnLastTakeProfit();
+        Bolugi_Short();
       }
-      Print(MediereNumber);
+     if(InpBotMode==BOLUGI_LONG_SHORT)
+     {
+     Bolugi_Long_Short();
      }
    
   }
@@ -573,7 +408,7 @@ void Complementare_Sell()
    double RangePrice = 0.0; // Initialize with a default value
    Print("---->",PositionNumber);
    
-   int OpenBuySellTrades=PositionNumber;
+   int OpenBuySellTrades=PositionBuyNumber;
 
       for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
       { 
@@ -615,9 +450,9 @@ void Complementare_Sell()
          MaxSellClose=ClosePrice;
         }
         Draw_HLine(MaxSellClose,clrRed);
-      if(bid==MaxClose)
+      if(bid>=MaxClose)
          {
-          CloseAllPositions();// inchide toate pozitiile cand
+          CloseSellPositions();// inchide toate pozitiile cand
           Delete_HLine();
           }
       Print("TrailPrice ",TrailPrice);
@@ -665,9 +500,9 @@ void Complementare_Buy()
    //Print("Ask",ask);
    int totalPositions = PositionsTotal();
    double RangePrice = 0.0; // Initialize with a default value
-   Print("---->",PositionNumber);
+   //Print("---->",PositionNumber);
    
-   int OpenBuySellTrades=PositionNumber;
+   int OpenBuySellTrades=PositionBuyNumber;
 
       for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
       { 
@@ -710,7 +545,7 @@ void Complementare_Buy()
         Draw_HLine(MaxClose,clrRed);
       if(ask<=MaxClose)
          {
-          CloseAllPositions();// inchide toate pozitiile cand
+          CloseBuyPositions();// inchide toate pozitiile cand
           Delete_HLine();
           }
       Print("TrailPrice ",TrailPrice);
@@ -816,7 +651,7 @@ double CalculateLossZetSell(double zetPrice, double volume) {
 void Mediere_Buy()
 {
 
- if(PositionsTotal()<=3+ContorM)//ContorM setam pe 0 el se modifica la fiecare deschidere de mediere maxim 7
+ if(PositionsTotal()<=3+ContorM && PositionsTotal()>0)//ContorM setam pe 0 el se modifica la fiecare deschidere de mediere maxim 7
      {
       double ask =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_ASK),_Digits);
       int totalPositions = PositionsTotal();
@@ -824,9 +659,11 @@ void Mediere_Buy()
       double ValueZ = 0.0;
        //Print("---->",PositionNumber);
    
-      int OpenBuySellTrades=PositionNumber+PositionMediereNumber;
-
-      for (int i = OpenBuySellTrades+MediereNumber*2; i<OpenBuySellTrades+totalPositions+(MediereNumber*12)+2; i++) //testat optim??? putem si mai departe aprox 180 de complementari
+      int OpenBuySellTrades=PositionBuyNumber;
+      //Print("MediereNumber",MediereNumber);
+      Print("Start for: ",OpenBuySellTrades);
+      Print("end for: ",OpenBuySellTrades+totalPositions+3);
+      for (int i = OpenBuySellTrades; i<OpenBuySellTrades+PositionsTotal()+4; i++) //testat optim??? putem si mai departe aprox 180 de complementari
       { 
       //Alert("ticket",i);
          if (PositionSelectByTicket(i)) 
@@ -834,6 +671,209 @@ void Mediere_Buy()
             if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) 
                {
                   RangeM0 = PositionGetDouble(POSITION_PRICE_OPEN); //pozitia 0 a rangeluiu
+                  //double positionProfit = NormalizeDouble(PositionGetDouble(POSITION_PROFIT),_Digits);
+                  //ValueZ += positionProfit;
+                  //Print("Pret");
+               }
+         }
+         
+      }
+      Print("RangeM0->",RangeM0);
+      //Print("Value for Z",ValueZ);
+      
+      //calculam pozitia next ord(pretul la care deschidem pozitia)
+      //7 nivele fibonacci
+      double PriceStartM=0.0;
+      double PriceLevel1=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(23.60*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel2=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(38.20*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel3=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(50.00*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel4=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(61.80*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel5=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(76.45*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel6=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(88.20*InpRangeM)/100*_Point,_Digits);
+      double PriceLevel7=NormalizeDouble(InpDistZ*_Point+InpDistTakeProfit*_Point+(100.00*InpRangeM)/100*_Point,_Digits);
+     
+        double PriceZ;
+        int decimalPlace=2;
+        double pipValue = CalculatePipValue()*0.01;
+        double VolumeZ=InpLots;  
+        int ColorZ=clrBlue;     
+        PriceStartM=RangeM0-PriceLevel1;
+        PriceZ=PriceStartM+InpDistZ*_Point;
+        Draw_HLine(PriceZ,ColorZ);
+        //Print("Pricez",PriceZ);
+        ValueZ=CalculateLossZetBuy(PriceZ,VolumeZ);
+        //Print("Volum Mediere=",VolumeZ);
+        //Print("Value for Z",ValueZ);
+        VolumeZ=NormalizeDouble(ValueZ/InpDistZ/pipValue*10,decimalPlace);
+        //Print("Volum Mediere=",VolumeZ);
+        /*
+        
+        */
+       if(Level1==false) ///LEVEL 1 Fibonacci
+        {
+        PriceStartM=RangeM0-PriceLevel1;
+        PriceZ=PriceStartM+InpDistZ*_Point;
+        Draw_HLine(PriceZ,ColorZ);
+        //if(PriceStartM>PriceLevel1)
+        //{
+        //Print("Level1");
+        if(ask<=PriceStartM && ContorM==0) 
+            {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order1 & TP1");
+               Level1=true;
+               medierebuy=true;
+               complementarebuy=false;
+                ContorM=1;
+            }
+       // } else {Level1=true;}
+                  
+        }
+         else if(Level1==true && Level2==false)///LEVEL 2 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel2-PriceLevel1);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel2)
+               {
+               if(ask<=PriceStartM && ContorM==1) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order2 & TP2");
+               Level2=true;
+               ContorM=2;
+                  }
+               }
+               else {Level2=true;}
+            
+         }
+         
+         else if(Level2==true && Level3==false)///LEVEL 3 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel3-PriceLevel2);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel3)
+               {
+               if(ask<=PriceStartM && ContorM==2) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order3 &Tp3");
+               Level3=true;
+               ContorM=3;
+                  }
+               }
+               else {Level3=true;}
+            
+         }
+        else if(Level3==true && Level4==false)///LEVEL 4 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel4-PriceLevel3);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel4)
+               {
+               if(ask<=PriceStartM && ContorM==3) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order4 &Tp4");
+               Level4=true;
+               ContorM=4;
+                  }
+               }
+               else {Level4=true;}
+            
+         }
+         else if(Level4==true && Level5==false)///LEVEL 5 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel5-PriceLevel4);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel5)
+               {
+                if(ask<=PriceStartM && ContorM==4) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order5 &Tp5");
+               Level5=true;
+               ContorM=5;
+                  }
+               }
+              else {Level5=true;}
+            
+         }
+         else if(Level5==true && Level6==false)///LEVEL 6 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel6-PriceLevel5);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel6)
+               {
+               if(ask<=PriceStartM && ContorM==5) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order6 &Tp6");
+               Level6=true;
+               ContorM=6;
+                   }
+               }
+               else {Level6=true;}
+            
+         }
+         else if(Level6==true && Level7==false)///LEVEL 7 Fibonacci
+         {
+         
+               PriceStartM=RangeM0-(PriceLevel7-PriceLevel6);
+               PriceZ=PriceStartM+InpDistZ*_Point;
+               Draw_HLine(PriceZ,ColorZ);
+               if(PriceStartM>PriceLevel7)
+               {
+               if(ask<=PriceStartM && ContorM==6) 
+                  {
+               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order7 &Tp7");
+               Level7=true;//ba e nevoie
+               ContorM=7;
+                  }
+               }
+               else {Level7=true;}
+            //CloseBuyPositionsOnLastTakeProfit();
+         }
+         
+      Print("PriceStartM->",PriceStartM);
+      Print("LevelMediereContor",ContorM);
+      //Print("Contor Pozitii", ContorMC);
+      if(medierebuy==true)
+      {
+      CloseBuyPositionsOnLastTakeProfit();
+      }
+      Print(MediereNumber);
+     }
+
+}
+///MEdiere Sell
+void Mediere_Sell()
+{
+     if(PositionsTotal()<=3+ContorM && PositionsTotal()>0)//ContorM setam pe 0 el se modifica la fiecare deschidere de mediere maxim 7
+     {
+      //Print("MedeiereSell: ",medieresell);
+      //Print("ComplementareSell: ",complementaresell);
+      double bid =NormalizeDouble(SymbolInfoDouble(_Symbol,SYMBOL_BID),_Digits);
+      int totalPositions = PositionsTotal();
+      double RangeM0 = 0.0; // Initialize with a default value
+      double ValueZ = 0.0;
+     
+   
+      int OpenBuySellTrades=PositionSellNumber;
+      Print("Start for: ",OpenBuySellTrades);
+      Print("end for: ",OpenBuySellTrades+totalPositions+10);
+      for (int i = OpenBuySellTrades; i<OpenBuySellTrades+totalPositions+10; i++) //testat optim??? putem si mai departe aprox 180 de complementari
+      { 
+      //Alert("ticket",i);
+         if (PositionSelectByTicket(i)) 
+         {
+            if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_SELL) 
+               {
+                  RangeM0 = PositionGetDouble(POSITION_PRICE_OPEN); //pozitia 0 a rangeluiu
+                  //Print("RangeM0->",RangeM0);
                   //double positionProfit = NormalizeDouble(PositionGetDouble(POSITION_PROFIT),_Digits);
                   //ValueZ += positionProfit;
                }
@@ -857,125 +897,225 @@ void Mediere_Buy()
         double PriceZ;
         int decimalPlace=2;
         double pipValue = CalculatePipValue()*0.01;
-        double VolumeZ=InpLots;       
-        PriceStartM=RangeM0-PriceLevel1;
-        PriceZ=PriceStartM+InpDistZ*_Point;
-        //Print("Pricez",PriceZ);
-        ValueZ=CalculateLossZetBuy(PriceZ,VolumeZ);
+        double VolumeZ=InpLots;      
+        int ColorZ=clrGold; 
+        PriceStartM=RangeM0+PriceLevel1;
+        PriceZ=PriceStartM-InpDistZ*_Point;
+        Print("Pricez",PriceZ);
+        ValueZ=CalculateLossZetSell(PriceZ,VolumeZ);
         //Print("Volum Mediere=",VolumeZ);
-        //Print("Value for Z",ValueZ);
+        Print("Value for Z",ValueZ);
         VolumeZ=NormalizeDouble(ValueZ/InpDistZ/pipValue*10,decimalPlace);
         //Print("Volum Mediere=",VolumeZ);
        if(Level1==false) ///LEVEL 1 Fibonacci
         {
-        
-        PriceStartM=RangeM0-PriceLevel1;
-        PriceZ=PriceStartM+InpDistZ*_Point;
+        //Print("Price sTartM in LEvel1",PriceStartM,"  ",PriceLevel1);
+        PriceStartM=RangeM0+PriceLevel1;
+        PriceZ=PriceStartM-InpDistZ*_Point;
         Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==0) 
+       // if(RangeM0>PriceLevel1)
+       // {
+         if(bid>=PriceStartM && ContorM==0) 
             {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order1 & TP1");
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order1 & TP1");
+               //trade.SellLimit(VolumeZ,bid,NULL,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,ORDER_TIME_GTC,0,NULL);
                Level1=true;
-               medierebuy=true;
-               complementarebuy=false;
+               medieresell=true;
+               complementaresell=false;
                 ContorM=1;
             }
-           Print("Mediere DA sau NU",medierebuy);
+           //Print("Mediere DA sau NU",medieresell);
+       // }
+          //   else {Level1=true;}  
         }
          else if(Level1==true && Level2==false)///LEVEL 2 Fibonacci
          {
-         
-               PriceStartM=RangeM0-(PriceLevel2-PriceLevel1);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==1) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order2 & TP2");
+               PriceStartM=RangeM0+(PriceLevel2-PriceLevel1);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+            if(PriceStartM>PriceLevel2)
+               {
+                  if(bid>=PriceStartM && ContorM==1) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order2 & TP2");
                Level2=true;
                ContorM=2;
-            }
-            
+                  }
+               }
+               else {Level2=true;}
          }
          
          else if(Level2==true && Level3==false)///LEVEL 3 Fibonacci
          {
          
-               PriceStartM=RangeM0-(PriceLevel3-PriceLevel2);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==2) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order3 &Tp3");
+               PriceStartM=RangeM0+(PriceLevel3-PriceLevel2);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+               if(PriceStartM>PriceLevel3)
+               {
+                  if(bid>=PriceStartM && ContorM==2) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order3 &Tp3");
                Level3=true;
                ContorM=3;
-            }
+                  }
+               }
+               else {Level3=true;}
             
          }
         else if(Level3==true && Level4==false)///LEVEL 4 Fibonacci
          {
          
-               PriceStartM=RangeM0-(PriceLevel4-PriceLevel3);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==3) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order4 &Tp4");
+               PriceStartM=RangeM0+(PriceLevel4-PriceLevel3);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+               if(PriceStartM>PriceLevel4)
+               {
+               if(bid>=PriceStartM && ContorM==3) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order4 &Tp4");
                Level4=true;
                ContorM=4;
-            }
+                  }
+               }
+               else {Level4=true;}
             
          }
          else if(Level4==true && Level5==false)///LEVEL 5 Fibonacci
          {
          
-               PriceStartM=RangeM0-(PriceLevel5-PriceLevel4);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==4) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order5 &Tp5");
+               PriceStartM=RangeM0+(PriceLevel5-PriceLevel4);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+               if(PriceStartM>PriceLevel5)
+               {
+                  if(bid>=PriceStartM && ContorM==4) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order5 &Tp5");
                Level5=true;
                ContorM=5;
-            }
+                  }
+               }
+               else {Level5=true;}
             
          }
          else if(Level5==true && Level6==false)///LEVEL 6 Fibonacci
          {
          
-               PriceStartM=RangeM0-(PriceLevel6-PriceLevel5);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==5) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order6 &Tp6");
+               PriceStartM=RangeM0+(PriceLevel6-PriceLevel5);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+               if(PriceStartM>PriceLevel6)
+               {
+               if(bid>=PriceStartM && ContorM==5) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order6 &Tp6");
                Level6=true;
                ContorM=6;
-            }
+                  }
+               }
+               else {Level6=true;}
             
          }
          else if(Level6==true && Level7==false)///LEVEL 7 Fibonacci
          {
          
-               PriceStartM=RangeM0-(PriceLevel7-PriceLevel6);
-               PriceZ=PriceStartM+InpDistZ*_Point;
-        Draw_HLine(PriceZ,clrGold);
-               if(ask<=PriceStartM && ContorM==6) 
-            {
-               trade.Buy(VolumeZ,NULL,ask,0,ask+(InpDistTakeProfit+InpDistZ)*_Point,"Order7 &Tp7");
+               PriceStartM=RangeM0+(PriceLevel7-PriceLevel6);
+               PriceZ=PriceStartM-InpDistZ*_Point;
+               Draw_HLine(PriceZ,clrGold);
+               if(PriceStartM>PriceLevel7)
+               {
+               if(bid>=PriceStartM && ContorM==6) 
+                  {
+               trade.Sell(VolumeZ,NULL,bid,0,bid-(InpDistTakeProfit+InpDistZ)*_Point,"Order7 &Tp7");
                Level7=true;//ba e nevoie
                ContorM=7;
-            }
+                  }
+               }
+               else {Level7=true;}
             //CloseBuyPositionsOnLastTakeProfit();
          }
          
       Print("PriceStartM->",PriceStartM);
       Print("LevelMediereContor",ContorM);
       //Print("Contor Pozitii", ContorMC);
-      if(medierebuy==true)
+      if(medieresell==true)
       {
-      CloseBuyPositionsOnLastTakeProfit();
+      CloseSellPositionsOnLastTakeProfit();
       }
       Print(MediereNumber);
      }
 
+}
+void Bolugi_Long()
+{
+   if(InpComplementareMode==COMPLEMENTARE_BUY && medierebuy==false && complementarebuy==true)
+     {
+      Complementare_Buy();
+      //Print("Complementare Buy ?");
+     }
+     if(InpMediereMode==MEDIERE_BUY)
+       {
+        Mediere_Buy();
+       }
+}
+void Bolugi_Short()
+{
+if(InpComplementareMode==COMPLEMENTARE_SELL && medieresell==false && complementaresell==true)
+     {
+      Complementare_Sell();
+      //Print("Complementare Buy ?");
+     }
+     if(InpMediereMode==MEDIERE_SELL)
+     {
+     Mediere_Sell();
+     }
+}
+
+void Bolugi_Long_Short()
+{
+   if(InpComplementareMode==COMPLEMENTARE_BUY_SELL && medierebuy==false && complementarebuy==true)
+     {
+     Complementare_Buy();
+     }
+     if(InpMediereMode==MEDIERE_BUY_SELL)
+     {
+     Mediere_Buy();
+     }
+      if(InpBotMode==BOLUGI_LONG_SHORT && medieresell==false && complementaresell==true)
+      {
+      Complementare_Sell();
+      }
+        if(InpMediereMode==MEDIERE_BUY_SELL)
+     {
+     Mediere_Sell();
+     }
+      
+}  
+
+//count open positions
+int CountOpenPositions(){
+
+   int counter=0;
+   int total=PositionsTotal();
+   for(int i=total-1;i>=0;i--)
+     {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket<=0)
+        {
+         Print("Failed to get position ticket");return -1;
+        }
+        if(!PositionSelectByTicket(ticket))
+          {
+           Print("Failed to select position by ticket");return -1;
+          }
+         ulong magicnumber;
+         if(!PositionGetInteger(POSITION_MAGIC,magicnumber)){Print("Failed to get magicnumber");return -1;}
+         if(InpMagicNumber==magicnumber){counter++;}
+      
+     }
+
+
+
+   return counter;
 }
