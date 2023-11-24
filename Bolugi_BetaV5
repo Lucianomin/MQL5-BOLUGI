@@ -6,9 +6,6 @@
 #property copyright "MindaLucian"
 #property link      "MindaLucian"
 #property version   "1.00"
-#property description "X-Close all positions on Bolugi."
-#property description "S-Close all posiitons on all instruments."
-#property description "H-Half the volumes on Bolugi."
 //+------------------------------------------------------------------+
 //| Includes                                                         |
 //+------------------------------------------------------------------+
@@ -56,23 +53,6 @@ input double InpLots=0.01; //fixed/additional lots/percent
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-input group "---->Notifications<----";
-input bool InpNotificationMode=true;
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-input group "---->MaxProfitAll<----";
-input bool InpTakeProfitMode=true; //True-activate ProfitAll/ False-Dezactivate
-input double InpTakeProfitAll=150; //TakeProfitAll(dollars/euros)(Profit>=Input=>CloseAllPositions)
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
-input group "---->MaxStopLossAll<----";
-input STOP_LOSS_ENUM InpStopLossMode=STOP_LOSS_NONE;//StopLossAll Mode(None/Money/Percent of Balance)
-input double InpStopLossAll=100;//MaxStopLossAll(Percent of Balance/Money/None)*See Above
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
 input group "---->Range Inputs(Complementare-LONG)<----";
 input int InpStopLoss=100; // InpStopLoss (pips / percent)
 input int InpStepC=100; // InpStepC (pips)
@@ -84,9 +64,9 @@ input int InpTrailStop=20; //InpTrailStop (pips)
 input group "---->Range Inputs(Mediere-LONG)<----";
 input int InpRangeM=1000;//InpRangeM (pips)
 input double InpZTP=2;//InpZTP (pips)(InpDistTakeProfit/ZTP, ZTP>=1)
-input bool InpTPMode=true;//Take Profit Multiplicator(true/false)
-input double InpTPMultiplicator=1.2;//InpTPMultiplicator
 input int InpDistTakeProfit=150;//InpDistTakeProfit (pips)
+input bool InpTPMode=true; //Multiplicator(true/false)
+input double InpTPMultiplicator=1.1;//InpTPMultiplicator
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -125,9 +105,9 @@ input int InpTrailStopS=20; //InpTrailStop (pips)
 input group "---->Range Inputs(Mediere-SHORT)<----";
 input int InpRangeMS=1000;//InpRangeM (pips)
 input double InpZTPS=2;//InpZTP (pips)(InpDistTakeProfit/ZTP, ZTP>=1)
-input bool InpTPSMode=true;//Take Profit Multiplicator(true/false)
-input double InpTPSMultiplicator=1.2;//InpTPSMultiplicator
 input int InpDistTakeProfitS=150;//InpDistTakeProfit (pips)
+input bool InpTPSMode=true; //Multiplicator(true/false)
+input double InpTPSMultiplicator=1.1;//InpTPMultiplicator
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -154,11 +134,15 @@ input bool InpLevel19S=true;
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-
+input group "---->MaxProfitAll<----";
+input bool InpTakeProfitMode=true; //True-activate ProfitAll/ False-Dezactivate
+input double InpTakeProfitAll=150; //TakeProfitAll(dollars/euros)(Profit>=Input=>CloseAllPositions)
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
-
+input group "---->MaxStopLossAll<----";
+input STOP_LOSS_ENUM InpStopLossMode=STOP_LOSS_NONE;//StopLossAll Mode(None/Money/Percent of Balance)
+input double InpStopLossAll=100;//MaxStopLossAll(Percent of Balance/Money)*See Above
 
 //+------------------------------------------------------------------+
 //| Global D                                                        |
@@ -226,9 +210,13 @@ ulong    TicketNumberS1=-1;
 //VAriable LONG
 double RangeMB0=0.0;
 int CONTOR=0;
+int contorTPB=0;
+int contorTP1=0;
 //VARIABLE SHORT
 double RangeMS0=0.0;
 int CONTORS=0;
+int contorTPS=0;
+int contorTP=0;
 //+------------------------------------------------------------------+
 //+VOLUME                                           |
 //+------------------------------------------------------------------+
@@ -357,14 +345,53 @@ double   PL1S,
          PL18S,
          PL19S;
 int decimalPlace=2;
-//LONG VARIABLES
+//LONG VARIABLEs
 double TZ=InpDistTakeProfit/InpZTP*_Point;
-int ContorTP=0;
+double TZ1=TZ*InpTPMultiplicator;
+double TZ2=TZ1*InpTPMultiplicator;
+double TZ3=TZ2*InpTPMultiplicator;
+double TZ4=TZ3*InpTPMultiplicator;
+double TZ5=TZ4*InpTPMultiplicator;
+double TZ6=TZ5*InpTPMultiplicator;
+double TZ7=TZ6*InpTPMultiplicator;
+double TZ8=TZ7*InpTPMultiplicator;
+double TZ9=TZ8*InpTPMultiplicator;
+//TP
+double TP1=InpDistTakeProfit;
+double TP2=TP1*InpTPMultiplicator;
+double TP3=TP2*InpTPMultiplicator;
+double TP4=TP3*InpTPMultiplicator;
+double TP5=TP4*InpTPMultiplicator;
+double TP6=TP5*InpTPMultiplicator;
+double TP7=TP6*InpTPMultiplicator;
+double TP8=TP7*InpTPMultiplicator;
+double TP9=TP8*InpTPMultiplicator;
+double TP10=TP9*InpTPMultiplicator;
 double step2=(InpStepC/2)*_Point;
 double step3=InpStepC*_Point;
 double PL0;
 //SHORT VARIABLES
 double TZS=InpDistTakeProfitS/InpZTPS*_Point;
+double TZS1=TZS*InpTPMultiplicator;
+double TZS2=TZS1*InpTPMultiplicator;
+double TZS3=TZS2*InpTPMultiplicator;
+double TZS4=TZS3*InpTPMultiplicator;
+double TZS5=TZS4*InpTPMultiplicator;
+double TZS6=TZS5*InpTPMultiplicator;
+double TZS7=TZS6*InpTPMultiplicator;
+double TZS8=TZS7*InpTPMultiplicator;
+double TZS9=TZS8*InpTPMultiplicator;
+//TPs
+double TPS1=InpDistTakeProfitS;
+double TPS2=TPS1*InpTPSMultiplicator;
+double TPS3=TPS2*InpTPSMultiplicator;
+double TPS4=TPS3*InpTPSMultiplicator;
+double TPS5=TPS4*InpTPSMultiplicator;
+double TPS6=TPS5*InpTPSMultiplicator;
+double TPS7=TPS6*InpTPSMultiplicator;
+double TPS8=TPS7*InpTPSMultiplicator;
+double TPS9=TPS8*InpTPSMultiplicator;
+double TPS10=TPS9*InpTPSMultiplicator;
 double step2S=(InpStepCS/2)*_Point;
 double step3S=InpStepCS*_Point;
 double PL0S;
@@ -375,8 +402,6 @@ int OnInit()
      {
       return INIT_PARAMETERS_INCORRECT;
      }
-//TpMultiplicator
-
    trade.SetExpertMagicNumber(InpMagicNumber);
    return(INIT_SUCCEEDED);
   }
@@ -519,29 +544,49 @@ void  OnChartEvent(const int       id,       const long&     lparam,    const do
      }
    if(id==CHARTEVENT_KEYDOWN)
      {
-      //Print(lparam);
+      Print(lparam);
       if(lparam==KEY_H)
         {
          for(int i=0; i<CountOpenPositions(); i++)
            {
-            ulong currticket=PositionGetTicket(i);
+            ulong currticket=PositionGetInteger(POSITION_TICKET);
             ulong magicnumber=PositionGetInteger(POSITION_MAGIC);
-            if(PositionSelectByTicket(currticket))
+
+            if(PositionGetDouble(POSITION_VOLUME)>0.01)
               {
-               if(PositionGetDouble(POSITION_VOLUME)>0.01)
+               if(currticket==TicketNumber1)
                  {
-                  if(InpMagicNumber==magicnumber)
-                    {
-                     double currvolume=PositionGetDouble(POSITION_VOLUME);
-                     double halfvolume=NormalizeDouble((currvolume/2),2);
-                     trade.PositionClosePartial(currticket,halfvolume,-1);
-                    }
+
+                  double currvolume=PositionGetDouble(POSITION_VOLUME);
+                  double halfvolume=NormalizeDouble((currvolume/2),2);
+                  trade.PositionClosePartial(currticket,halfvolume,-1);
+                 }
+               if(currticket==TicketNumberS1)
+                 {
+
+                  double currvolume=PositionGetDouble(POSITION_VOLUME);
+                  double halfvolume=NormalizeDouble((currvolume/2),2);
+                  trade.PositionClosePartial(currticket,halfvolume,-1);
+                 }
+               if(currticket==TicketNumber)
+                 {
+
+                  double currvolume=PositionGetDouble(POSITION_VOLUME);
+                  double halfvolume=NormalizeDouble((currvolume/2),2);
+                  trade.PositionClosePartial(currticket,halfvolume,-1);
+
+                 }
+               if(currticket==TicketNumberS1)
+                 {
+
+                  double currvolume=PositionGetDouble(POSITION_VOLUME);
+                  double halfvolume=NormalizeDouble((currvolume/2),2);
+                  trade.PositionClosePartial(currticket,halfvolume,-1);
                  }
               }
            }
         }
      }
-
   }
 //+------------------------------------------------------------------+
 //| Functions                                                        |
@@ -780,33 +825,46 @@ void Bolugi_Long()
    PL18=NormalizeDouble(PL0-((461.80*InpRangeM)/100*_Point+InpDistTakeProfit*_Point),_Digits);
    PL19=NormalizeDouble(PL0-((500.00*InpRangeM)/100*_Point+InpDistTakeProfit*_Point),_Digits);
 
-   /*if(InpTPMode==true && Level1==true)
-   {
-
-      PL2=NormalizeDouble(PL0-((38.20*InpRangeM)/100*_Point+InpDistTakeProfit*InpTPMultiplicator*_Point),_Digits);
-      Calculate_V2();
-   }*/
-
 //LONG FUNCTION
-   Calculate_V1();
-   Calculate_V2();
-   Calculate_V3();
-   Calculate_V4();
-   Calculate_V5();
-   Calculate_V6();
-   Calculate_V7();
-   Calculate_V8();
-   Calculate_V9();
-   Calculate_V10();
-   Calculate_V11();
-   Calculate_V12();
-   Calculate_V13();
-   Calculate_V14();
-   Calculate_V15();
-   Calculate_V16();
-   Calculate_V17();
-   Calculate_V18();
-   Calculate_V19();
+   if(InpTPMode==true)
+     {
+      Calculate_V1();
+      Calculate_V2M();
+      Calculate_V3M();
+      Calculate_V4M();
+      Calculate_V5M();
+      Calculate_V6M();
+      Calculate_V7M();
+      Calculate_V8M();
+      Calculate_V9M();
+      Calculate_V10M();
+     }
+   else
+     {
+      Calculate_V1();
+      Calculate_V2();
+      Calculate_V3();
+      Calculate_V4();
+      Calculate_V5();
+      Calculate_V6();
+      Calculate_V7();
+      Calculate_V8();
+      Calculate_V9();
+      Calculate_V10();
+
+     }
+   if(InpTPMode==false)
+     {
+      TP2=TP1;
+      TP3=TP1;
+      TP4=TP1;
+      TP5=TP1;
+      TP6=TP1;
+      TP7=TP1;
+      TP8=TP1;
+      TP9=TP1;
+      TP10=TP1;
+     }
    if(InpLevel1==false)
      {
       PL1=PL2;
@@ -1547,14 +1605,7 @@ void Bolugi_Long()
          Level19=false;
         }
      }
-   if(InpStopLossAll*(-1)>=AccountInfoDouble(ACCOUNT_PROFIT) && InpNotificationMode==true)
-     {
-      SendNotification("Loss is greater then StopLossAll!");
-     }
-   if(Account_Profit>=InpTakeProfitAll && InpNotificationMode==true)
-     {
-      SendNotification("Profit is greater then MaxProfit!");
-     }
+
 
   }
 //Bolugi_Short
@@ -1632,25 +1683,46 @@ void Bolugi_Short()
    PL19S=NormalizeDouble(PL0S+((500.00*InpRangeMS)/100*_Point+InpDistTakeProfitS*_Point),_Digits);
 
 //SHORT FUNCITON
-   Calculate_V1S();
-   Calculate_V2S();
-   Calculate_V3S();
-   Calculate_V4S();
-   Calculate_V5S();
-   Calculate_V6S();
-   Calculate_V7S();
-   Calculate_V8S();
-   Calculate_V9S();
-   Calculate_V10S();
-   Calculate_V11S();
-   Calculate_V12S();
-   Calculate_V13S();
-   Calculate_V14S();
-   Calculate_V15S();
-   Calculate_V16S();
-   Calculate_V17S();
-   Calculate_V18S();
-   Calculate_V19S();
+   if(InpTPSMode==true)
+     {
+      Calculate_V1S();
+      Calculate_V2MS();
+      Calculate_V3MS();
+      Calculate_V4MS();
+      Calculate_V5MS();
+      Calculate_V6MS();
+      Calculate_V7MS();
+      Calculate_V8MS();
+      Calculate_V9MS();
+      Calculate_V10MS();
+     }
+   else
+     {
+      Calculate_V1S();
+      Calculate_V2S();
+      Calculate_V3S();
+      Calculate_V4S();
+      Calculate_V5S();
+      Calculate_V6S();
+      Calculate_V7S();
+      Calculate_V8S();
+      Calculate_V9S();
+      Calculate_V10S();
+
+     }
+    if(InpTPSMode==false)
+      {
+       TPS2=TPS1;
+       TPS3=TPS1;
+       TPS4=TPS1;
+       TPS5=TPS1;
+       TPS6=TPS1;
+       TPS7=TPS1;
+       TPS8=TPS1;
+       TPS9=TPS1;
+       TPS10=TPS1;
+       
+      }
    if(InpLevel1S==false)
      {
       PL1S=PL2S;
@@ -1863,7 +1935,7 @@ void Bolugi_Short()
       if(lastTick.bid>=PL1S)
         {
 
-         if(trade.Sell(Vl1S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order1 & TP1 SELL"))
+         if(trade.Sell(Vl1S,NULL,lastTick.bid,0,lastTick.bid-TPS1*_Point,"Order1 & TP1 SELL"))
            {
             LevelS1=true;
             medieresell=true;
@@ -1883,7 +1955,7 @@ void Bolugi_Short()
          if(lastTick.bid>=PL2S)
            {
 
-            if(trade.Sell(Vl2S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order2 & TP2 SELL"))
+            if(trade.Sell(Vl2S,NULL,lastTick.bid,0,lastTick.bid-TPS2*_Point,"Order2 & TP2 SELL"))
               {
                LevelS2=true;
                medieresell=true;
@@ -1904,7 +1976,7 @@ void Bolugi_Short()
             if(lastTick.bid>=PL3S)
               {
 
-               if(trade.Sell(Vl3S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order3 &Tp3 SELL"))
+               if(trade.Sell(Vl3S,NULL,lastTick.bid,0,lastTick.bid-TPS3*_Point,"Order3 &Tp3 SELL"))
                  {
                   LevelS3=true;
                   medieresell=true;
@@ -1926,7 +1998,7 @@ void Bolugi_Short()
                if(lastTick.bid>=PL4S)
                  {
 
-                  if(trade.Sell(Vl4S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order4 &Tp4 SELL"))
+                  if(trade.Sell(Vl4S,NULL,lastTick.bid,0,lastTick.bid-TPS4*_Point,"Order4 &Tp4 SELL"))
                     {
                      LevelS4=true;
                      medieresell=true;
@@ -1948,7 +2020,7 @@ void Bolugi_Short()
                   if(lastTick.bid>=PL5S)
                     {
 
-                     if(trade.Sell(Vl5S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order5 &Tp5 SELL"))
+                     if(trade.Sell(Vl5S,NULL,lastTick.bid,0,lastTick.bid-TPS5*_Point,"Order5 &Tp5 SELL"))
                        {
                         medieresell=true;
                         LevelS5=true;
@@ -1970,7 +2042,7 @@ void Bolugi_Short()
                      if(lastTick.bid>=PL6S)
                        {
 
-                        if(trade.Sell(Vl6S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order6 &Tp6 SELL"))
+                        if(trade.Sell(Vl6S,NULL,lastTick.bid,0,lastTick.bid-TPS6*_Point,"Order6 &Tp6 SELL"))
                           {
                            medieresell=true;
                            LevelS6=true;
@@ -1992,7 +2064,7 @@ void Bolugi_Short()
                         if(lastTick.bid>=PL7S)
                           {
 
-                           if(trade.Sell(Vl7S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order7 &Tp7 SELL"))
+                           if(trade.Sell(Vl7S,NULL,lastTick.bid,0,lastTick.bid-TPS7*_Point,"Order7 &Tp7 SELL"))
                              {
                               medieresell=true;
                               LevelS7=true;//ba e nevoie
@@ -2007,14 +2079,14 @@ void Bolugi_Short()
 
                        }
                      else
-                        if(LevelS8==false && InpLevel8S==true) ///LEVEL 7 Fibonacci
+                        if(LevelS8==false && InpLevel8S==true) ///LEVEL 8 Fibonacci
                           {
 
 
                            if(lastTick.bid>=PL8S)
                              {
 
-                              if(trade.Sell(Vl8S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order8 &Tp8 SELL"))
+                              if(trade.Sell(Vl8S,NULL,lastTick.bid,0,lastTick.bid-TPS8*_Point,"Order8 &Tp8 SELL"))
                                 {
                                  medieresell=true;
                                  LevelS8=true;//ba e nevoie
@@ -2029,14 +2101,14 @@ void Bolugi_Short()
 
                           }
                         else
-                           if(LevelS9==false && InpLevel9S==true)///LEVEL 7 Fibonacci
+                           if(LevelS9==false && InpLevel9S==true)///LEVEL 9 Fibonacci
                              {
 
 
                               if(lastTick.bid>=PL9S)
                                 {
 
-                                 if(trade.Sell(Vl9S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order9 &Tp9 SELL"))
+                                 if(trade.Sell(Vl9S,NULL,lastTick.bid,0,lastTick.bid-TPS9*_Point,"Order9 &Tp9 SELL"))
                                    {
                                     medieresell=true;
                                     LevelS9=true;//ba e nevoie
@@ -2058,7 +2130,7 @@ void Bolugi_Short()
                                  if(lastTick.bid>=PL10S)
                                    {
 
-                                    if(trade.Sell(Vl10S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order10 &Tp10 SELL"))
+                                    if(trade.Sell(Vl10S,NULL,lastTick.bid,0,lastTick.bid-TPS10*_Point,"Order10 &Tp10 SELL"))
                                       {
                                        medieresell=true;
                                        LevelS10=true;//ba e nevoie
@@ -2394,14 +2466,6 @@ void Bolugi_Short()
          LevelS19=false;
         }
      }
-   if(InpStopLossAll*(-1)>=AccountInfoDouble(ACCOUNT_PROFIT) && InpNotificationMode==true)
-     {
-      SendNotification("Loss is greater then StopLossAll!");
-     }
-   if(Account_Profit>=InpTakeProfitAll && InpNotificationMode==true)
-     {
-      SendNotification("Profit is greater then MaxProfit!");
-     }
   }
 
 
@@ -2550,25 +2614,45 @@ void Bolugi_Long_Short()
    PL18S=NormalizeDouble(PL0S+((461.80*InpRangeMS)/100*_Point+InpDistTakeProfitS*_Point),_Digits);
    PL19S=NormalizeDouble(PL0S+((500.00*InpRangeMS)/100*_Point+InpDistTakeProfitS*_Point),_Digits);
 //LONG FUNCTION
-   Calculate_V1();
-   Calculate_V2();
-   Calculate_V3();
-   Calculate_V4();
-   Calculate_V5();
-   Calculate_V6();
-   Calculate_V7();
-   Calculate_V8();
-   Calculate_V9();
-   Calculate_V10();
-   Calculate_V11();
-   Calculate_V12();
-   Calculate_V13();
-   Calculate_V14();
-   Calculate_V15();
-   Calculate_V16();
-   Calculate_V17();
-   Calculate_V18();
-   Calculate_V19();
+   if(InpTPMode==true)
+     {
+      Calculate_V1();
+      Calculate_V2M();
+      Calculate_V3M();
+      Calculate_V4M();
+      Calculate_V5M();
+      Calculate_V6M();
+      Calculate_V7M();
+      Calculate_V8M();
+      Calculate_V9M();
+      Calculate_V10M();
+     }
+   else
+     {
+      Calculate_V1();
+      Calculate_V2();
+      Calculate_V3();
+      Calculate_V4();
+      Calculate_V5();
+      Calculate_V6();
+      Calculate_V7();
+      Calculate_V8();
+      Calculate_V9();
+      Calculate_V10();
+   
+     }
+     if(InpTPMode==false)
+     {
+      TP2=TP1;
+      TP3=TP1;
+      TP4=TP1;
+      TP5=TP1;
+      TP6=TP1;
+      TP7=TP1;
+      TP8=TP1;
+      TP9=TP1;
+      TP10=TP1;
+     }
    if(InpLevel1==false)
      {
       PL1=PL2;
@@ -2668,25 +2752,45 @@ void Bolugi_Long_Short()
       Calculate_V9();
      }
 //SHORT FUNCITON
-   Calculate_V1S();
-   Calculate_V2S();
-   Calculate_V3S();
-   Calculate_V4S();
-   Calculate_V5S();
-   Calculate_V6S();
-   Calculate_V7S();
-   Calculate_V8S();
-   Calculate_V9S();
-   Calculate_V10S();
-   Calculate_V11S();
-   Calculate_V12S();
-   Calculate_V13S();
-   Calculate_V14S();
-   Calculate_V15S();
-   Calculate_V16S();
-   Calculate_V17S();
-   Calculate_V18S();
-   Calculate_V19S();
+   if(InpTPSMode==true)
+     {
+      Calculate_V1S();
+      Calculate_V2MS();
+      Calculate_V3MS();
+      Calculate_V4MS();
+      Calculate_V5MS();
+      Calculate_V6MS();
+      Calculate_V7MS();
+      Calculate_V8MS();
+      Calculate_V9MS();
+      Calculate_V10MS();
+     }
+   else
+     {
+      Calculate_V1S();
+      Calculate_V2S();
+      Calculate_V3S();
+      Calculate_V4S();
+      Calculate_V5S();
+      Calculate_V6S();
+      Calculate_V7S();
+      Calculate_V8S();
+      Calculate_V9S();
+      Calculate_V10S();
+
+     }
+   if(InpTPSMode==false)
+     {
+      TPS2=TPS1;
+      TPS3=TPS1;
+      TPS4=TPS1;
+      TPS5=TPS1;
+      TPS6=TPS1;
+      TPS7=TPS1;
+      TPS8=TPS1;
+      TPS9=TPS1;
+      TPS10=TPS1;
+     }
    if(InpLevel1S==false)
      {
       PL1S=PL2S;
@@ -2994,7 +3098,7 @@ void Bolugi_Long_Short()
       if(lastTick.ask<=PL1)
         {
 
-         if(trade.Buy(Vl1,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order1 & TP1"))
+         if(trade.Buy(Vl1,NULL,lastTick.ask,0,lastTick.ask+TP1*_Point,"Order1 & TP1"))
            {
             Level1=true;
             medierebuy=true;
@@ -3014,7 +3118,7 @@ void Bolugi_Long_Short()
          if(lastTick.ask<=PL2)
            {
 
-            if(trade.Buy(Vl2,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order2 & TP2"))
+            if(trade.Buy(Vl2,NULL,lastTick.ask,0,lastTick.ask+TP2*_Point,"Order2 & TP2"))
               {
                medierebuy=true;
                Level2=true;
@@ -3035,7 +3139,7 @@ void Bolugi_Long_Short()
             if(lastTick.ask<=PL3)
               {
 
-               if(trade.Buy(Vl3,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order3 &Tp3"))
+               if(trade.Buy(Vl3,NULL,lastTick.ask,0,lastTick.ask+TP3*_Point,"Order3 &Tp3"))
                  {
                   medierebuy=true;
                   Level3=true;
@@ -3057,7 +3161,7 @@ void Bolugi_Long_Short()
                if(lastTick.ask<=PL4)
                  {
 
-                  if(trade.Buy(Vl4,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order4 &Tp4"))
+                  if(trade.Buy(Vl4,NULL,lastTick.ask,0,lastTick.ask+TP4*_Point,"Order4 &Tp4"))
                     {
                      medierebuy=true;
                      Level4=true;
@@ -3079,7 +3183,7 @@ void Bolugi_Long_Short()
                   if(lastTick.ask<=PL5)
                     {
 
-                     if(trade.Buy(Vl5,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order5 &Tp5"))
+                     if(trade.Buy(Vl5,NULL,lastTick.ask,0,lastTick.ask+TP5*_Point,"Order5 &Tp5"))
                        {
                         medierebuy=true;
                         Level5=true;
@@ -3101,7 +3205,7 @@ void Bolugi_Long_Short()
                      if(lastTick.ask<=PL6)
                        {
 
-                        if(trade.Buy(Vl6,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order6 &Tp6"))
+                        if(trade.Buy(Vl6,NULL,lastTick.ask,0,lastTick.ask+TP6*_Point,"Order6 &Tp6"))
                           {
                            medierebuy=true;
                            Level6=true;
@@ -3123,7 +3227,7 @@ void Bolugi_Long_Short()
                         if(lastTick.ask<=PL7)
                           {
 
-                           if(trade.Buy(Vl7,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order7 &Tp7"))
+                           if(trade.Buy(Vl7,NULL,lastTick.ask,0,lastTick.ask+TP7*_Point,"Order7 &Tp7"))
                              {
                               medierebuy=true;
                               Level7=true;//ba e nevoie
@@ -3145,7 +3249,7 @@ void Bolugi_Long_Short()
                            if(lastTick.ask<=PL8)
                              {
 
-                              if(trade.Buy(Vl8,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order8 &Tp8"))
+                              if(trade.Buy(Vl8,NULL,lastTick.ask,0,lastTick.ask+TP8*_Point,"Order8 &Tp8"))
                                 {
                                  medierebuy=true;
                                  Level8=true;//ba e nevoie
@@ -3167,7 +3271,7 @@ void Bolugi_Long_Short()
                               if(lastTick.ask<=PL9)
                                 {
 
-                                 if(trade.Buy(Vl9,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order9 &Tp9"))
+                                 if(trade.Buy(Vl9,NULL,lastTick.ask,0,lastTick.ask+TP9*_Point,"Order9 &Tp9"))
                                    {
                                     medierebuy=true;
                                     Level9=true;//ba e nevoie
@@ -3189,7 +3293,7 @@ void Bolugi_Long_Short()
                                  if(lastTick.ask<=PL10)
                                    {
 
-                                    if(trade.Buy(Vl10,NULL,lastTick.ask,0,lastTick.ask+InpDistTakeProfit*_Point,"Order10 &Tp10"))
+                                    if(trade.Buy(Vl10,NULL,lastTick.ask,0,lastTick.ask+TP10*_Point,"Order10 &Tp10"))
                                       {
                                        medierebuy=true;
                                        Level10=true;//ba e nevoie
@@ -3449,7 +3553,7 @@ void Bolugi_Long_Short()
       if(lastTick.bid>=PL1S)
         {
 
-         if(trade.Sell(Vl1S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order1 & TP1 SELL"))
+         if(trade.Sell(Vl1S,NULL,lastTick.bid,0,lastTick.bid-TPS1*_Point,"Order1 & TP1 SELL"))
            {
             LevelS1=true;
             medieresell=true;
@@ -3469,7 +3573,7 @@ void Bolugi_Long_Short()
          if(lastTick.bid>=PL2S)
            {
 
-            if(trade.Sell(Vl2S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order2 & TP2 SELL"))
+            if(trade.Sell(Vl2S,NULL,lastTick.bid,0,lastTick.bid-TPS2*_Point,"Order2 & TP2 SELL"))
               {
                LevelS2=true;
                medieresell=true;
@@ -3490,7 +3594,7 @@ void Bolugi_Long_Short()
             if(lastTick.bid>=PL3S)
               {
 
-               if(trade.Sell(Vl3S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order3 &Tp3 SELL"))
+               if(trade.Sell(Vl3S,NULL,lastTick.bid,0,lastTick.bid-TPS3*_Point,"Order3 &Tp3 SELL"))
                  {
                   LevelS3=true;
                   medieresell=true;
@@ -3512,7 +3616,7 @@ void Bolugi_Long_Short()
                if(lastTick.bid>=PL4S)
                  {
 
-                  if(trade.Sell(Vl4S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order4 &Tp4 SELL"))
+                  if(trade.Sell(Vl4S,NULL,lastTick.bid,0,lastTick.bid-TPS4*_Point,"Order4 &Tp4 SELL"))
                     {
                      LevelS4=true;
                      medieresell=true;
@@ -3534,7 +3638,7 @@ void Bolugi_Long_Short()
                   if(lastTick.bid>=PL5S)
                     {
 
-                     if(trade.Sell(Vl5S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order5 &Tp5 SELL"))
+                     if(trade.Sell(Vl5S,NULL,lastTick.bid,0,lastTick.bid-TPS5*_Point,"Order5 &Tp5 SELL"))
                        {
                         medieresell=true;
                         LevelS5=true;
@@ -3556,7 +3660,7 @@ void Bolugi_Long_Short()
                      if(lastTick.bid>=PL6S)
                        {
 
-                        if(trade.Sell(Vl6S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order6 &Tp6 SELL"))
+                        if(trade.Sell(Vl6S,NULL,lastTick.bid,0,lastTick.bid-TPS6*_Point,"Order6 &Tp6 SELL"))
                           {
                            medieresell=true;
                            LevelS6=true;
@@ -3578,7 +3682,7 @@ void Bolugi_Long_Short()
                         if(lastTick.bid>=PL7S)
                           {
 
-                           if(trade.Sell(Vl7S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order7 &Tp7 SELL"))
+                           if(trade.Sell(Vl7S,NULL,lastTick.bid,0,lastTick.bid-TPS7*_Point,"Order7 &Tp7 SELL"))
                              {
                               medieresell=true;
                               LevelS7=true;//ba e nevoie
@@ -3600,7 +3704,7 @@ void Bolugi_Long_Short()
                            if(lastTick.bid>=PL8S)
                              {
 
-                              if(trade.Sell(Vl8S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order8 &Tp8 SELL"))
+                              if(trade.Sell(Vl8S,NULL,lastTick.bid,0,lastTick.bid-TPS8*_Point,"Order8 &Tp8 SELL"))
                                 {
                                  medieresell=true;
                                  LevelS8=true;//ba e nevoie
@@ -3622,7 +3726,7 @@ void Bolugi_Long_Short()
                               if(lastTick.bid>=PL9S)
                                 {
 
-                                 if(trade.Sell(Vl9S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order9 &Tp9 SELL"))
+                                 if(trade.Sell(Vl9S,NULL,lastTick.bid,0,lastTick.bid-TPS9*_Point,"Order9 &Tp9 SELL"))
                                    {
                                     medieresell=true;
                                     LevelS9=true;//ba e nevoie
@@ -3644,7 +3748,7 @@ void Bolugi_Long_Short()
                                  if(lastTick.bid>=PL10S)
                                    {
 
-                                    if(trade.Sell(Vl10S,NULL,lastTick.bid,0,lastTick.bid-InpDistTakeProfitS*_Point,"Order10 &Tp10 SELL"))
+                                    if(trade.Sell(Vl10S,NULL,lastTick.bid,0,lastTick.bid-TPS10*_Point,"Order10 &Tp10 SELL"))
                                       {
                                        medieresell=true;
                                        LevelS10=true;//ba e nevoie
@@ -4048,16 +4152,6 @@ void Bolugi_Long_Short()
          LevelS19=false;
         }
      }
-   if(InpStopLossAll*(-1)>=AccountInfoDouble(ACCOUNT_PROFIT) && InpNotificationMode==true)
-     {
-      SendNotification("Loss is greater then StopLossAll!");
-     }
-//double Account_Profit=AccountInfoDouble(ACCOUNT_PROFIT);
-   if(Account_Profit>=InpTakeProfitAll && InpNotificationMode==true)
-     {
-      SendNotification("Profit is greater then MaxProfit!");
-     }
-
   }
 //+------------------------------------------------------------------+
 //| Calculate lot/pip value                                          |
@@ -4169,6 +4263,36 @@ void Calculate_V2()
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
+void Calculate_V2M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss2=InpLots*PipValue*(PL0-PL2+TZ1)
+            +(Vl1*PipValue*(PL1-PL2+TZ1));
+      Loss2=MathAbs(Loss2);
+      Vl2=NormalizeDouble(Loss2/TZ1/PipValue,decimalPlace);
+
+     }
+   if(CONTOR==2)
+     {
+      Loss2=2*InpLots*PipValue*(PL0-PL2+TZ1+step2)
+            +(Vl1*PipValue*(PL1-PL2+TZ1));
+      Loss2=MathAbs(Loss2);
+      Vl2=NormalizeDouble(Loss2/TZ1/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss2=3*InpLots*PipValue*(PL0-PL2+TZ1+step3)
+            +(Vl1*PipValue*(PL1-PL2+TZ1));
+      Loss2=MathAbs(Loss2);
+      Vl2=NormalizeDouble(Loss2/TZ1/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss2:",Loss2,"Vl2: ",Vl2);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 void Calculate_V3()
   {
    double PipValue=CalculatePipValue()*InpLots;
@@ -4196,6 +4320,39 @@ void Calculate_V3()
             +(Vl2*PipValue*(PL2-PL3+TZ));
       Loss3=MathAbs(Loss3);
       Vl3=NormalizeDouble(Loss3/TZ/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss3:",Loss3,"Vl3: ",Vl3);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V3M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss3=InpLots*PipValue*(PL0-PL3+TZ2)
+            +(Vl1*PipValue*(PL1-PL3+TZ2))
+            +(Vl2*PipValue*(PL2-PL3+TZ2));
+      Loss3=MathAbs(Loss3);
+      Vl3=NormalizeDouble(Loss3/TZ2/PipValue,decimalPlace);
+
+     }
+   if(CONTOR==2)
+     {
+      Loss3=2*InpLots*PipValue*(PL0-PL3+TZ2+step2)
+            +(Vl1*PipValue*(PL1-PL3+TZ2))
+            +(Vl2*PipValue*(PL2-PL3+TZ2));
+      Loss3=MathAbs(Loss3);
+      Vl3=NormalizeDouble(Loss3/TZ2/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss3=3*InpLots*PipValue*(PL0-PL3+TZ2+step3)
+            +(Vl1*PipValue*(PL1-PL3+TZ2))
+            +(Vl2*PipValue*(PL2-PL3+TZ2));
+      Loss3=MathAbs(Loss3);
+      Vl3=NormalizeDouble(Loss3/TZ2/PipValue,decimalPlace);
      }
    Print("PipValue:",PipValue," Loss3:",Loss3,"Vl3: ",Vl3);
   }
@@ -4239,6 +4396,43 @@ void Calculate_V4()
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
+void Calculate_V4M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss4=InpLots*PipValue*(-PL4+PL0+TZ3)
+            +(Vl1*PipValue*(-PL4+PL1+TZ3))
+            +(Vl2*PipValue*(-PL4+PL2+TZ3))
+            +(Vl3*PipValue*(-PL4+PL3+TZ3));
+
+      Loss4=MathAbs(Loss4);
+      Vl4=NormalizeDouble(Loss4/TZ3/PipValue,decimalPlace);
+
+     }
+   if(CONTOR==2)
+     {
+      Loss4=2*InpLots*PipValue*(-PL4+PL0+TZ3+step2)
+            +(Vl1*PipValue*(-PL4+PL1+TZ3))
+            +(Vl2*PipValue*(-PL4+PL2+TZ3))
+            +(Vl3*PipValue*(-PL4+PL3+TZ3));
+      Loss4=MathAbs(Loss4);
+      Vl4=NormalizeDouble(Loss4/TZ3/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss4=3*InpLots*PipValue*(-PL4+PL0+TZ3+step3)
+            +(Vl1*PipValue*(-PL4+PL1+TZ3))
+            +(Vl2*PipValue*(-PL4+PL2+TZ3))
+            +(Vl3*PipValue*(-PL4+PL3+TZ3));
+      Loss4=MathAbs(Loss4);
+      Vl4=NormalizeDouble(Loss4/TZ3/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss4:",Loss4," Vl4: ",Vl4);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 void Calculate_V5()
   {
    double PipValue=CalculatePipValue()*InpLots;
@@ -4272,6 +4466,45 @@ void Calculate_V5()
             +(Vl4*PipValue*(-PL5+PL4+TZ));
       Loss5=MathAbs(Loss5);
       Vl5=NormalizeDouble(Loss5/TZ/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss5:",Loss5," Vl5: ",Vl5);
+  }
+//+------------------------------------------------------------------+
+//| Multiplicator                                                                 |
+//+------------------------------------------------------------------+
+void Calculate_V5M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss5=InpLots*PipValue*(-PL5+PL0+TZ4)
+            +(Vl1*PipValue*(-PL5+PL1+TZ4))
+            +(Vl2*PipValue*(-PL5+PL2+TZ4))
+            +(Vl3*PipValue*(-PL5+PL3+TZ4))
+            +(Vl4*PipValue*(-PL5+PL4+TZ4));
+      Loss5=MathAbs(Loss5);
+      Vl5=NormalizeDouble(Loss5/TZ4/PipValue,decimalPlace);
+
+     }
+   if(CONTOR==2)
+     {
+      Loss5=2*InpLots*PipValue*(-PL5+PL0+TZ4+step2)
+            +(Vl1*PipValue*(-PL5+PL1+TZ4))
+            +(Vl2*PipValue*(-PL5+PL2+TZ4))
+            +(Vl3*PipValue*(-PL5+PL3+TZ4))
+            +(Vl4*PipValue*(-PL5+PL4+TZ4));
+      Loss5=MathAbs(Loss5);
+      Vl5=NormalizeDouble(Loss5/TZ4/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss5=3*InpLots*PipValue*(-PL5+PL0+TZ4+step3)
+            +(Vl1*PipValue*(-PL5+PL1+TZ4))
+            +(Vl2*PipValue*(-PL5+PL2+TZ4))
+            +(Vl3*PipValue*(-PL5+PL3+TZ4))
+            +(Vl4*PipValue*(-PL5+PL4+TZ4));
+      Loss5=MathAbs(Loss5);
+      Vl5=NormalizeDouble(Loss5/TZ4/PipValue,decimalPlace);
      }
    Print("PipValue:",PipValue," Loss5:",Loss5," Vl5: ",Vl5);
   }
@@ -4320,6 +4553,48 @@ void Calculate_V6()
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
+void Calculate_V6M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss6=InpLots*PipValue*(-PL6+PL0+TZ5)
+            +(Vl1*PipValue*(-PL6+PL1+TZ5))
+            +(Vl2*PipValue*(-PL6+PL2+TZ5))
+            +(Vl3*PipValue*(-PL6+PL3+TZ5))
+            +(Vl4*PipValue*(-PL6+PL4+TZ5))
+            +(Vl5*PipValue*(-PL6+PL5+TZ5));
+      Loss6=MathAbs(Loss6);
+      Vl6=NormalizeDouble(Loss6/TZ5/PipValue,decimalPlace);
+
+     }
+   if(CONTOR==2)
+     {
+      Loss6=2*InpLots*PipValue*(-PL6+PL0+TZ5+step2)
+            +(Vl1*PipValue*(-PL6+PL1+TZ5))
+            +(Vl2*PipValue*(-PL6+PL2+TZ5))
+            +(Vl3*PipValue*(-PL6+PL3+TZ5))
+            +(Vl4*PipValue*(-PL6+PL4+TZ5))
+            +(Vl5*PipValue*(-PL6+PL5+TZ5));
+      Loss6=MathAbs(Loss6);
+      Vl6=NormalizeDouble(Loss6/TZ5/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss6=3*InpLots*PipValue*(-PL6+PL0+TZ5+step3)
+            +(Vl1*PipValue*(-PL6+PL1+TZ5))
+            +(Vl2*PipValue*(-PL6+PL2+TZ5))
+            +(Vl3*PipValue*(-PL6+PL3+TZ5))
+            +(Vl4*PipValue*(-PL6+PL4+TZ5))
+            +(Vl5*PipValue*(-PL6+PL5+TZ5));
+      Loss6=MathAbs(Loss6);
+      Vl6=NormalizeDouble(Loss6/TZ5/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss6:",Loss6," Vl6:",Vl6);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
 void Calculate_V7()
   {
    double PipValue=CalculatePipValue()*InpLots;
@@ -4362,7 +4637,51 @@ void Calculate_V7()
      }
    Print("PipValue:",PipValue," Loss7:",Loss7," Vl7: ",Vl7);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V7M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss7=InpLots*PipValue*(-PL7+PL0+TZ6)
+            +(Vl1*PipValue*(-PL7+PL1+TZ6))
+            +(Vl2*PipValue*(-PL7+PL2+TZ6))
+            +(Vl3*PipValue*(-PL7+PL3+TZ6))
+            +(Vl4*PipValue*(-PL7+PL4+TZ6))
+            +(Vl5*PipValue*(-PL7+PL5+TZ6))
+            +(Vl6*PipValue*(-PL7+PL6+TZ6));
+      Loss7=MathAbs(Loss7);
+      Vl7=NormalizeDouble(Loss7/TZ6/PipValue,decimalPlace);
 
+     }
+   if(CONTOR==2)
+     {
+      Loss7=2*InpLots*PipValue*(-PL7+PL0+TZ6+step2)
+            +(Vl1*PipValue*(-PL7+PL1+TZ6))
+            +(Vl2*PipValue*(-PL7+PL2+TZ6))
+            +(Vl3*PipValue*(-PL7+PL3+TZ6))
+            +(Vl4*PipValue*(-PL7+PL4+TZ6))
+            +(Vl5*PipValue*(-PL7+PL5+TZ6))
+            +(Vl6*PipValue*(-PL7+PL6+TZ6));
+      Loss7=MathAbs(Loss7);
+      Vl7=NormalizeDouble(Loss7/TZ6/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss7=3*InpLots*PipValue*(-PL7+PL0+TZ6+step3)
+            +(Vl1*PipValue*(-PL7+PL1+TZ6))
+            +(Vl2*PipValue*(-PL7+-PL2+TZ6))
+            +(Vl3*PipValue*(-PL7+PL3+TZ6))
+            +(Vl4*PipValue*(-PL7+PL4+TZ6))
+            +(Vl5*PipValue*(-PL7+PL5+TZ6))
+            +(Vl6*PipValue*(-PL7+PL6+TZ6));
+      Loss7=MathAbs(Loss7);
+      Vl7=NormalizeDouble(Loss7/TZ6/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss7:",Loss7," Vl7: ",Vl7);
+  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -4411,7 +4730,54 @@ void Calculate_V8()
      }
    Print("PipValue:",PipValue," Loss8:",Loss8," Vl8:",Vl8);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V8M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss8=InpLots*PipValue*(-PL8+PL0+TZ7)
+            +(Vl1*PipValue*(-PL8+PL1+TZ7))
+            +(Vl2*PipValue*(-PL8+PL2+TZ7))
+            +(Vl3*PipValue*(-PL8+PL3+TZ7))
+            +(Vl4*PipValue*(-PL8+PL4+TZ7))
+            +(Vl5*PipValue*(-PL8+PL5+TZ7))
+            +(Vl6*PipValue*(-PL8+PL6+TZ7))
+            +(Vl7*PipValue*(-PL8+PL7+TZ7));
+      Loss8=MathAbs(Loss8);
+      Vl8=NormalizeDouble(Loss8/TZ7/PipValue,decimalPlace);
 
+     }
+   if(CONTOR==2)
+     {
+      Loss8=2*InpLots*PipValue*(-PL8+PL0+TZ7+step2)
+            +(Vl1*PipValue*(-PL8+PL1+TZ7))
+            +(Vl2*PipValue*(-PL8+PL2+TZ7))
+            +(Vl3*PipValue*(-PL8+PL3+TZ7))
+            +(Vl4*PipValue*(-PL8+PL4+TZ7))
+            +(Vl5*PipValue*(-PL8+PL5+TZ7))
+            +(Vl6*PipValue*(-PL8+PL6+TZ7))
+            +(Vl7*PipValue*(-PL8+PL7+TZ7));
+      Loss8=MathAbs(Loss8);
+      Vl8=NormalizeDouble(Loss8/TZ7/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss8=3*InpLots*PipValue*(-PL8+PL0+TZ7+step3)
+            +(Vl1*PipValue*(-PL8+PL1+TZ7))
+            +(Vl2*PipValue*(-PL8+PL2+TZ7))
+            +(Vl3*PipValue*(-PL8+PL3+TZ7))
+            +(Vl4*PipValue*(-PL8+PL4+TZ7))
+            +(Vl5*PipValue*(-PL8+PL5+TZ7))
+            +(Vl6*PipValue*(-PL8+PL6+TZ7))
+            +(Vl7*PipValue*(-PL8+PL7+TZ7));
+      Loss8=MathAbs(Loss8);
+      Vl8=NormalizeDouble(Loss8/TZ7/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss8:",Loss8," Vl8:",Vl8);
+  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -4463,7 +4829,57 @@ void Calculate_V9()
      }
    Print("PipValue:",PipValue," Loss9:",Loss9," Vl9: ",Vl9);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V9M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss9=InpLots*PipValue*(-PL9+PL0+TZ8)
+            +(Vl1*PipValue*(-PL9+PL1+TZ8))
+            +(Vl2*PipValue*(-PL9+PL2+TZ8))
+            +(Vl3*PipValue*(-PL9+PL3+TZ8))
+            +(Vl4*PipValue*(-PL9+PL4+TZ8))
+            +(Vl5*PipValue*(-PL9+PL5+TZ8))
+            +(Vl6*PipValue*(-PL9+PL6+TZ8))
+            +(Vl7*PipValue*(-PL9+PL7+TZ8))
+            +(Vl8*PipValue*(-PL9+PL8+TZ8));
+      Loss9=MathAbs(Loss9);
+      Vl9=NormalizeDouble(Loss9/TZ8/PipValue,decimalPlace);
 
+     }
+   if(CONTOR==2)
+     {
+      Loss9=2*InpLots*PipValue*(-PL9+PL0+TZ8+step2)
+            +(Vl1*PipValue*(-PL9+PL1+TZ8))
+            +(Vl2*PipValue*(-PL9+PL2+TZ8))
+            +(Vl3*PipValue*(-PL9+PL3+TZ8))
+            +(Vl4*PipValue*(-PL9+PL4+TZ8))
+            +(Vl5*PipValue*(-PL9+PL5+TZ8))
+            +(Vl6*PipValue*(-PL9+PL6+TZ8))
+            +(Vl7*PipValue*(-PL9+PL7+TZ8))
+            +(Vl8*PipValue*(-PL9+PL8+TZ8));
+      Loss9=MathAbs(Loss9);
+      Vl9=NormalizeDouble(Loss9/TZ8/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss9=3*InpLots*PipValue*(-PL9+PL0+TZ8+step3)
+            +(Vl1*PipValue*(-PL9+PL1+TZ8))
+            +(Vl2*PipValue*(-PL9+PL2+TZ8))
+            +(Vl3*PipValue*(-PL9+PL3+TZ8))
+            +(Vl4*PipValue*(-PL9+PL4+TZ8))
+            +(Vl5*PipValue*(-PL9+PL5+TZ8))
+            +(Vl6*PipValue*(-PL9+PL6+TZ8))
+            +(Vl7*PipValue*(-PL9+PL7+TZ8))
+            +(Vl8*PipValue*(-PL9+PL8+TZ8));
+      Loss9=MathAbs(Loss9);
+      Vl9=NormalizeDouble(Loss9/TZ8/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss9:",Loss9," Vl9: ",Vl9);
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -4519,7 +4935,60 @@ void Calculate_V10()
      }
    Print("PipValue:",PipValue," Loss10:",Loss10," Vl10: ",Vl10);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V10M()
+  {
+   double PipValue=CalculatePipValue()*InpLots;
+   if(CONTOR==1)
+     {
+      Loss10=InpLots*PipValue*(-PL10+PL0+TZ9)
+             +(Vl1*PipValue*(-PL10+PL1+TZ9))
+             +(Vl2*PipValue*(-PL10+PL2+TZ9))
+             +(Vl3*PipValue*(-PL10+PL3+TZ9))
+             +(Vl4*PipValue*(-PL10+PL4+TZ9))
+             +(Vl5*PipValue*(-PL10+PL5+TZ9))
+             +(Vl6*PipValue*(-PL10+PL6+TZ9))
+             +(Vl7*PipValue*(-PL10+PL7+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl9*PipValue*(-PL10+PL9+TZ9));
+      Vl10=NormalizeDouble(MathAbs(Loss10)/TZ9/PipValue,decimalPlace);
 
+     }
+   if(CONTOR==2)
+     {
+      Loss10=2*InpLots*PipValue*(-PL10+PL0+TZ9+step2)
+             +(Vl1*PipValue*(-PL10+PL1+TZ9))
+             +(Vl2*PipValue*(-PL10+PL2+TZ9))
+             +(Vl3*PipValue*(-PL10+PL3+TZ9))
+             +(Vl4*PipValue*(-PL10+PL4+TZ9))
+             +(Vl5*PipValue*(-PL10+PL5+TZ9))
+             +(Vl6*PipValue*(-PL10+PL6+TZ9))
+             +(Vl7*PipValue*(-PL10+PL7+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl9*PipValue*(-PL10+PL9+TZ9));
+      Vl10=NormalizeDouble(MathAbs(Loss10)/TZ9/PipValue,decimalPlace);
+     }
+   if(CONTOR==3)
+     {
+      Loss10=3*InpLots*PipValue*(-PL10+PL0+TZ9+step3)
+             +(Vl1*PipValue*(-PL10+PL1+TZ9))
+             +(Vl2*PipValue*(-PL10+PL2+TZ9))
+             +(Vl3*PipValue*(-PL10+PL3+TZ9))
+             +(Vl4*PipValue*(-PL10+PL4+TZ9))
+             +(Vl5*PipValue*(-PL10+PL5+TZ9))
+             +(Vl6*PipValue*(-PL10+PL6+TZ9))
+             +(Vl7*PipValue*(-PL10+PL7+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl8*PipValue*(-PL10+PL8+TZ9))
+             +(Vl9*PipValue*(-PL10+PL9+TZ9));
+      Vl10=NormalizeDouble(MathAbs(Loss10)/TZ9/PipValue,decimalPlace);
+     }
+   Print("PipValue:",PipValue," Loss10:",Loss10," Vl10: ",Vl10);
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -5214,7 +5683,35 @@ void Calculate_V2S()
      }
    Print("PipValue:", PipValue, " Loss2S:", Loss2S, " Vl2S:", Vl2S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V2MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss2S = InpLots * PipValue * (PL2S - PL0S + TZS1)
+               + (Vl1S * PipValue * (PL2S - PL1S + TZS1));
 
+      Vl2S = NormalizeDouble(MathAbs(Loss2S) / TZS1 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss2S = 2 * InpLots * PipValue * (PL2S - PL0S + TZS1 + step2S)
+               + (Vl1S * PipValue * (PL2S - PL1S + TZS1));
+
+      Vl2S = NormalizeDouble(MathAbs(Loss2S) / TZS1 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss2S = 3 * InpLots * PipValue * (PL2S - PL0S + TZS1 + step3S)
+               + (Vl1S * PipValue * (PL2S - PL1S + TZS1));
+
+      Vl2S = NormalizeDouble(MathAbs(Loss2S) / TZS1 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss2S:", Loss2S, " Vl2S:", Vl2S);
+  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -5244,6 +5741,38 @@ void Calculate_V3S()
                + (Vl2S * PipValue * (PL3S - PL2S + TZS));
 
       Vl3S = NormalizeDouble(MathAbs(Loss3S) / TZS / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss3S:", Loss3S, " Vl3S:", Vl3S);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V3MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss3S = InpLots * PipValue * (PL3S - PL0S + TZS2)
+               + (Vl1S * PipValue * (PL3S - PL1S + TZS2))
+               + (Vl2S * PipValue * (PL3S - PL2S + TZS2));
+
+      Vl3S = NormalizeDouble(MathAbs(Loss3S) / TZS2 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss3S = 2 * InpLots * PipValue * (PL3S - PL0S + TZS2 + step2S)
+               + (Vl1S * PipValue * (PL3S - PL1S + TZS2))
+               + (Vl2S * PipValue * (PL3S - PL2S + TZS2));
+
+      Vl3S = NormalizeDouble(MathAbs(Loss3S) / TZS2 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss3S = 3 * InpLots * PipValue * (PL3S - PL0S + TZS2 + step3S)
+               + (Vl1S * PipValue * (PL3S - PL1S + TZS2))
+               + (Vl2S * PipValue * (PL3S - PL2S + TZS2));
+
+      Vl3S = NormalizeDouble(MathAbs(Loss3S) / TZS2 / PipValue, decimalPlace);
      }
    Print("PipValue:", PipValue, " Loss3S:", Loss3S, " Vl3S:", Vl3S);
   }
@@ -5283,7 +5812,41 @@ void Calculate_V4S()
      }
    Print("PipValue:", PipValue, " Loss4S:", Loss4S, " Vl4S:", Vl4S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V4MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss4S = InpLots * PipValue * (PL4S - PL0S + TZS3)
+               + (Vl1S * PipValue * (PL4S - PL1S + TZS3))
+               + (Vl2S * PipValue * (PL4S - PL2S + TZS3))
+               + (Vl3S * PipValue * (PL4S - PL3S + TZS3));
 
+      Vl4S = NormalizeDouble(MathAbs(Loss4S) / TZS3 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss4S = 2 * InpLots * PipValue * (PL4S - PL0S + TZS3 + step2S)
+               + (Vl1S * PipValue * (PL4S - PL1S + TZS3))
+               + (Vl2S * PipValue * (PL4S - PL2S + TZS3))
+               + (Vl3S * PipValue * (PL4S - PL3S + TZS3));
+
+      Vl4S = NormalizeDouble(MathAbs(Loss4S) / TZS3 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss4S = 3 * InpLots * PipValue * (PL4S - PL0S + TZS3 + step3S)
+               + (Vl1S * PipValue * (PL4S - PL1S + TZS3))
+               + (Vl2S * PipValue * (PL4S - PL2S + TZS3))
+               + (Vl3S * PipValue * (PL4S - PL3S + TZS3));
+
+      Vl4S = NormalizeDouble(MathAbs(Loss4S) / TZS3 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss4S:", Loss4S, " Vl4S:", Vl4S);
+  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -5322,7 +5885,44 @@ void Calculate_V5S()
      }
    Print("PipValue:", PipValue, " Loss5S:", Loss5S, " Vl5S:", Vl5S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V5MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss5S = InpLots * PipValue * (PL5S - PL0S + TZS4)
+               + (Vl1S * PipValue * (PL5S - PL1S + TZS4))
+               + (Vl2S * PipValue * (PL5S - PL2S + TZS4))
+               + (Vl3S * PipValue * (PL5S - PL3S + TZS4))
+               + (Vl4S * PipValue * (PL5S - PL4S + TZS4));
 
+      Vl5S = NormalizeDouble(MathAbs(Loss5S) / TZS4 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss5S = 2 * InpLots * PipValue * (PL5S - PL0S + TZS4 + step2S)
+               + (Vl1S * PipValue * (PL5S - PL1S + TZS4))
+               + (Vl2S * PipValue * (PL5S - PL2S + TZS4))
+               + (Vl3S * PipValue * (PL5S - PL3S + TZS4))
+               + (Vl4S * PipValue * (PL5S - PL4S + TZS4));
+
+      Vl5S = NormalizeDouble(MathAbs(Loss5S) / TZS4 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss5S = 3 * InpLots * PipValue * (PL5S - PL0S + TZS4 + step3S)
+               + (Vl1S * PipValue * (PL5S - PL1S + TZS4))
+               + (Vl2S * PipValue * (PL5S - PL2S + TZS4))
+               + (Vl3S * PipValue * (PL5S - PL3S + TZS4))
+               + (Vl4S * PipValue * (PL5S - PL4S + TZS4));
+
+      Vl5S = NormalizeDouble(MathAbs(Loss5S) / TZS4 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss5S:", Loss5S, " Vl5S:", Vl5S);
+  }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -5364,6 +5964,48 @@ void Calculate_V6S()
      }
    Print("PipValue:", PipValue, " Loss6S:", Loss6S, " Vl6S:", Vl6S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V6MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss6S = InpLots * PipValue * (PL6S - PL0S + TZS5)
+               + (Vl1S * PipValue * (PL6S - PL1S + TZS5))
+               + (Vl2S * PipValue * (PL6S - PL2S + TZS5))
+               + (Vl3S * PipValue * (PL6S - PL3S + TZS5))
+               + (Vl4S * PipValue * (PL6S - PL4S + TZS5))
+               + (Vl5S * PipValue * (PL6S - PL5S + TZS5));
+
+      Vl6S = NormalizeDouble(MathAbs(Loss6S) / TZS5 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss6S = 2 * InpLots * PipValue * (PL6S - PL0S + TZS5 + step2S)
+               + (Vl1S * PipValue * (PL6S - PL1S + TZS5))
+               + (Vl2S * PipValue * (PL6S - PL2S + TZS5))
+               + (Vl3S * PipValue * (PL6S - PL3S + TZS5))
+               + (Vl4S * PipValue * (PL6S - PL4S + TZS5))
+               + (Vl5S * PipValue * (PL6S - PL5S + TZS5));
+
+      Vl6S = NormalizeDouble(MathAbs(Loss6S) / TZS5 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss6S = 3 * InpLots * PipValue * (PL6S - PL0S + TZS5 + step3S)
+               + (Vl1S * PipValue * (PL6S - PL1S + TZS5))
+               + (Vl2S * PipValue * (PL6S - PL2S + TZS5))
+               + (Vl3S * PipValue * (PL6S - PL3S + TZS5))
+               + (Vl4S * PipValue * (PL6S - PL4S + TZS5))
+               + (Vl5S * PipValue * (PL6S - PL5S + TZS5));
+
+      Vl6S = NormalizeDouble(MathAbs(Loss6S) / TZS5 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss6S:", Loss6S, " Vl6S:", Vl6S);
+  }
+
 
 
 //+------------------------------------------------------------------+
@@ -5407,6 +6049,50 @@ void Calculate_V7S()
                + (Vl6S * PipValue * (PL7S - PL6S + TZS));
 
       Vl7S = NormalizeDouble(MathAbs(Loss7S) / TZS / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss7S:", Loss7S, " Vl7S:", Vl7S);
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V7MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss7S = InpLots * PipValue * (PL7S - PL0S + TZS6)
+               + (Vl1S * PipValue * (PL7S - PL1S + TZS6))
+               + (Vl2S * PipValue * (PL7S - PL2S + TZS6))
+               + (Vl3S * PipValue * (PL7S - PL3S + TZS6))
+               + (Vl4S * PipValue * (PL7S - PL4S + TZS6))
+               + (Vl5S * PipValue * (PL7S - PL5S + TZS6))
+               + (Vl6S * PipValue * (PL7S - PL6S + TZS6));
+
+      Vl7S = NormalizeDouble(MathAbs(Loss7S) / TZS6 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss7S = 2 * InpLots * PipValue * (PL7S - PL0S + TZS6 + step2S)
+               + (Vl1S * PipValue * (PL7S - PL1S + TZS6))
+               + (Vl2S * PipValue * (PL7S - PL2S + TZS6))
+               + (Vl3S * PipValue * (PL7S - PL3S + TZS6))
+               + (Vl4S * PipValue * (PL7S - PL4S + TZS6))
+               + (Vl5S * PipValue * (PL7S - PL5S + TZS6))
+               + (Vl6S * PipValue * (PL7S - PL6S + TZS6));
+
+      Vl7S = NormalizeDouble(MathAbs(Loss7S) / TZS6 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss7S = 3 * InpLots * PipValue * (PL7S - PL0S + TZS6 + step3S)
+               + (Vl1S * PipValue * (PL7S - PL1S + TZS6))
+               + (Vl2S * PipValue * (PL7S - PL2S + TZS6))
+               + (Vl3S * PipValue * (PL7S - PL3S + TZS6))
+               + (Vl4S * PipValue * (PL7S - PL4S + TZS6))
+               + (Vl5S * PipValue * (PL7S - PL5S + TZS6))
+               + (Vl6S * PipValue * (PL7S - PL6S + TZS6));
+
+      Vl7S = NormalizeDouble(MathAbs(Loss7S) / TZS6 / PipValue, decimalPlace);
      }
    Print("PipValue:", PipValue, " Loss7S:", Loss7S, " Vl7S:", Vl7S);
   }
@@ -5459,7 +6145,53 @@ void Calculate_V8S()
      }
    Print("PipValue:", PipValue, " Loss8S:", Loss8S, " Vl8S:", Vl8S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V8MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss8S = InpLots * PipValue * (PL8S - PL0S + TZS7)
+               + (Vl1S * PipValue * (PL8S - PL1S + TZS7))
+               + (Vl2S * PipValue * (PL8S - PL2S + TZS7))
+               + (Vl3S * PipValue * (PL8S - PL3S + TZS7))
+               + (Vl4S * PipValue * (PL8S - PL4S + TZS7))
+               + (Vl5S * PipValue * (PL8S - PL5S + TZS7))
+               + (Vl6S * PipValue * (PL8S - PL6S + TZS7))
+               + (Vl7S * PipValue * (PL8S - PL7S + TZS7));
 
+      Vl8S = NormalizeDouble(MathAbs(Loss8S) / TZS7 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss8S = 2 * InpLots * PipValue * (PL8S - PL0S + TZS7 + step2S)
+               + (Vl1S * PipValue * (PL8S - PL1S + TZS7))
+               + (Vl2S * PipValue * (PL8S - PL2S + TZS7))
+               + (Vl3S * PipValue * (PL8S - PL3S + TZS7))
+               + (Vl4S * PipValue * (PL8S - PL4S + TZS7))
+               + (Vl5S * PipValue * (PL8S - PL5S + TZS7))
+               + (Vl6S * PipValue * (PL8S - PL6S + TZS7))
+               + (Vl7S * PipValue * (PL8S - PL7S + TZS7));
+
+      Vl8S = NormalizeDouble(MathAbs(Loss8S) / TZS7 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss8S = 3 * InpLots * PipValue * (PL8S - PL0S + TZS7 + step3S)
+               + (Vl1S * PipValue * (PL8S - PL1S + TZS7))
+               + (Vl2S * PipValue * (PL8S - PL2S + TZS7))
+               + (Vl3S * PipValue * (PL8S - PL3S + TZS7))
+               + (Vl4S * PipValue * (PL8S - PL4S + TZS7))
+               + (Vl5S * PipValue * (PL8S - PL5S + TZS7))
+               + (Vl6S * PipValue * (PL8S - PL6S + TZS7))
+               + (Vl7S * PipValue * (PL8S - PL7S + TZS7));
+
+      Vl8S = NormalizeDouble(MathAbs(Loss8S) / TZS7 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss8S:", Loss8S, " Vl8S:", Vl8S);
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -5511,7 +6243,56 @@ void Calculate_V9S()
      }
    Print("PipValue:", PipValue, " Loss9S:", Loss9S, " Vl9S:", Vl9S);
   }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V9MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss9S = InpLots * PipValue * (PL9S - PL0S + TZS8)
+               + (Vl1S * PipValue * (PL9S - PL1S + TZS8))
+               + (Vl2S * PipValue * (PL9S - PL2S + TZS8))
+               + (Vl3S * PipValue * (PL9S - PL3S + TZS8))
+               + (Vl4S * PipValue * (PL9S - PL4S + TZS8))
+               + (Vl5S * PipValue * (PL9S - PL5S + TZS8))
+               + (Vl6S * PipValue * (PL9S - PL6S + TZS8))
+               + (Vl7S * PipValue * (PL9S - PL7S + TZS8))
+               + (Vl8S * PipValue * (PL9S - PL8S + TZS8));
 
+      Vl9S = NormalizeDouble(MathAbs(Loss9S) / TZS8 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss9S = 2 * InpLots * PipValue * (PL9S - PL0S + TZS8 + step2S)
+               + (Vl1S * PipValue * (PL9S - PL1S + TZS8))
+               + (Vl2S * PipValue * (PL9S - PL2S + TZS8))
+               + (Vl3S * PipValue * (PL9S - PL3S + TZS8))
+               + (Vl4S * PipValue * (PL9S - PL4S + TZS8))
+               + (Vl5S * PipValue * (PL9S - PL5S + TZS8))
+               + (Vl6S * PipValue * (PL9S - PL6S + TZS8))
+               + (Vl7S * PipValue * (PL9S - PL7S + TZS8))
+               + (Vl8S * PipValue * (PL9S - PL8S + TZS8));
+
+      Vl9S = NormalizeDouble(MathAbs(Loss9S) / TZS8 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss9S = 3 * InpLots * PipValue * (PL9S - PL0S + TZS8 + step3S)
+               + (Vl1S * PipValue * (PL9S - PL1S + TZS8))
+               + (Vl2S * PipValue * (PL9S - PL2S + TZS8))
+               + (Vl3S * PipValue * (PL9S - PL3S + TZS8))
+               + (Vl4S * PipValue * (PL9S - PL4S + TZS8))
+               + (Vl5S * PipValue * (PL9S - PL5S + TZS8))
+               + (Vl6S * PipValue * (PL9S - PL6S + TZS8))
+               + (Vl7S * PipValue * (PL9S - PL7S + TZS8))
+               + (Vl8S * PipValue * (PL9S - PL8S + TZS8));
+
+      Vl9S = NormalizeDouble(MathAbs(Loss9S) / TZS8 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss9S:", Loss9S, " Vl9S:", Vl9S);
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -5566,7 +6347,59 @@ void Calculate_V10S()
      }
    Print("PipValue:", PipValue, " Loss10S:", Loss10S, " Vl10S:", Vl10S);
   }
-
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void Calculate_V10MS()
+  {
+   double PipValue = CalculatePipValue() * InpLots;
+   if(CONTORS == 1)
+     {
+      Loss10S = InpLots * PipValue * (PL10S - PL0S + TZS9)
+                + (Vl1S * PipValue * (PL10S - PL1S + TZS9))
+                + (Vl2S * PipValue * (PL10S - PL2S + TZS9))
+                + (Vl3S * PipValue * (PL10S - PL3S + TZS9))
+                + (Vl4S * PipValue * (PL10S - PL4S + TZS9))
+                + (Vl5S * PipValue * (PL10S - PL5S + TZS9))
+                + (Vl6S * PipValue * (PL10S - PL6S + TZS9))
+                + (Vl7S * PipValue * (PL10S - PL7S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL8S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL9S + TZS9))
+                + (Vl9S * PipValue * (PL10S - PL9S + TZS9));
+      Vl10S = NormalizeDouble(MathAbs(Loss10S) / TZS9 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 2)
+     {
+      Loss10S = 2 * InpLots * PipValue * (PL10S - PL0S + TZS9 + step2S)
+                + (Vl1S * PipValue * (PL10S - PL1S + TZS9))
+                + (Vl2S * PipValue * (PL10S - PL2S + TZS9))
+                + (Vl3S * PipValue * (PL10S - PL3S + TZS9))
+                + (Vl4S * PipValue * (PL10S - PL4S + TZS9))
+                + (Vl5S * PipValue * (PL10S - PL5S + TZS9))
+                + (Vl6S * PipValue * (PL10S - PL6S + TZS9))
+                + (Vl7S * PipValue * (PL10S - PL7S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL8S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL9S + TZS9))
+                + (Vl9S * PipValue * (PL10S - PL9S + TZS9));
+      Vl10S = NormalizeDouble(MathAbs(Loss10S) / TZS9 / PipValue, decimalPlace);
+     }
+   if(CONTORS == 3)
+     {
+      Loss10S = 3 * InpLots * PipValue * (PL10S - PL0S + TZS9 + step3S)
+                + (Vl1S * PipValue * (PL10S - PL1S + TZS9))
+                + (Vl2S * PipValue * (PL10S - PL2S + TZS9))
+                + (Vl3S * PipValue * (PL10S - PL3S + TZS9))
+                + (Vl4S * PipValue * (PL10S - PL4S + TZS9))
+                + (Vl5S * PipValue * (PL10S - PL5S + TZS9))
+                + (Vl6S * PipValue * (PL10S - PL6S + TZS9))
+                + (Vl7S * PipValue * (PL10S - PL7S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL8S + TZS9))
+                + (Vl8S * PipValue * (PL10S - PL9S + TZS9))
+                + (Vl9S * PipValue * (PL10S - PL9S + TZS9));
+      Vl10S = NormalizeDouble(MathAbs(Loss10S) / TZS9 / PipValue, decimalPlace);
+     }
+   Print("PipValue:", PipValue, " Loss10S:", Loss10S, " Vl10S:", Vl10S);
+  }
 
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -6193,4 +7026,5 @@ void Calculate_V19S()
   }
 //+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
