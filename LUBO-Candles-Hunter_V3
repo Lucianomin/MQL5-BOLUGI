@@ -1,0 +1,902 @@
+//+------------------------------------------------------------------+
+//|                                    LUBO-Candles-Hunter-Ver.1.mq5 |
+//|                       Copyright 2024, Lucian Minda & Bogdan Ilie |
+//|                                      https://www.lubo-hunting.com|
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2024, Lucian Minda & Bogdan Ilie"
+#property link      "https://www.lubo-hunting.com"
+#property version   "1.00"
+#property description "5 Candles Break"
+#property description "Instruments:DAX, NAS, UK100, US30, US500, US2000"
+//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//| INITIALIZED                                                     |
+//+------------------------------------------------------------------+
+#include <Trade/Trade.mqh>
+
+CTrade trade;
+
+MqlTick lastTick,prevTick;
+#define KEY_X 88
+#define KEY_E 69
+#define KEY_H 72
+#define KEY_S 83
+
+enum TRADING_INSTRUMENT
+  {
+   TRADING_FOREX,
+   TRADING_INDICES
+
+  };
+enum ENUM_LOT_MODE
+  {
+   LOT_MODE_FIXED,
+   LOT_MODE_PROCENT,
+   LOT_MODE_MONEY
+  };
+//+------------------------------------------------------------------+
+//| INPUTS                                                           |
+//+------------------------------------------------------------------+
+input group "====================General Settings======================="
+input ulong InpMagicNumber=1111;
+//input bool InpOneTimePerDirection=true;
+//input bool InpDoubleEntryPerDirection=true;
+input ENUM_LOT_MODE InpLotMode=LOT_MODE_FIXED;
+input TRADING_INSTRUMENT InpTradingInstrument=TRADING_FOREX;
+input double InpLot1=0.01;
+input double InpLot2=0.01;
+input double InpLot3=0.01;
+input double InpLot4=0.01;
+input double InpLot5=0.01;
+input group "=================RR Candle Range(Min & Max)============"
+input bool InpRangeMinMax=true;
+input double InpMinCandleRange=1000;
+input double InpMaxCandleRange=4000;
+input group "====================Stop Loss All========================="
+input bool InpStopLossMode=false;
+input double InpStopLossAll=10;
+input group "====================Take Profit All========================="
+input bool InpTakeProfitMode=false;
+input double InpTakeProfitAll=10;
+input group "====================BreakEven Settings===================="
+//input bool InpSpread=true;
+input bool InpBreakevenType=true;
+input int InpBreakevenValue=800;
+input double InpPufferBreakEven=200;
+input group "====================Trail SL Settings===================="
+input int InpTriggerTSL=1000;
+input int InpTSLPoint=2000;
+input int InpStepTSL=500;
+input group "====================Time Filter Settings====================="
+input bool InpTimeFilter=true;
+input int InpStartTimeHour=9;
+input int InpEndTimeHour=20;
+input group "====================Entry and Position Settings================"
+//input ENUM_TIMEFRAMES InpTimeFrame=PERIOD_CURRENT; // Indicator timeframe
+//input double pipSize = 0.0001;
+input int InpPuffer=200;
+input bool InpTargetCandleUse1=true;
+input int  InpTargetCandleHour1=9;
+input int  InpTargetCandleMin1=5;
+input bool InpTargetCandleUse2=true;
+input int  InpTargetCandleHour2=11;
+input int  InpTargetCandleMin2=0;
+input bool InpTargetCandleUse3=true;
+input int  InpTargetCandleHour3=16;
+input int  InpTargetCandleMin3=30;
+input bool InpTargetCandleUse4=true;
+input int  InpTargetCandleHour4=17;
+input int  InpTargetCandleMin4=0;
+input bool InpTargetCandleUse5=true;
+input int  InpTargetCandleHour5=22;
+input int  InpTargetCandleMin5=5;
+input group "----------------->Long Entry Settings"
+input bool  InpTargetLongUse1=true;
+input int   InpTargetLong1=1000;
+input bool  InpTargetLongUse2=true;
+input int   InpTargetLong2=1200;
+input bool  InpTargetLongUs3=true;
+input int   InpTargetLong3=2200;
+input bool  InpTargetLongUse4=true;
+input int   InpTargetLong4=3200;
+input bool  InpTargetLongUse5=true;
+input int   InpTargetLong5=4200;
+input group "----------------->Short Entry Settings"
+input bool  InpTargetShortUse1=true;
+input int   InpTargetShort1=1000;
+input bool  InpTargetShortUse2=true;
+input int   InpTargetShort2=1200;
+input bool  InpTargetShortUs3=true;
+input int   InpTargetShort3=2200;
+input bool  InpTargetShortUse4=true;
+input int   InpTargetShort4=3200;
+input bool  InpTargetShortUse5=true;
+input int   InpTargetShort5=4200;
+//+------------------------------------------------------------------+
+//| VARIABLES                                                        |
+//+------------------------------------------------------------------+
+double Lot1=InpLot1;
+double Lot2=InpLot2;
+double Lot3=InpLot3;
+double Lot4=InpLot4;
+double Lot5=InpLot5;
+bool AboveHigh1=true;
+bool UnderLow1=true;
+bool AboveHigh2=true;
+bool UnderLow2=true;
+bool AboveHigh3=true;
+bool UnderLow3=true;
+bool AboveHigh4=true;
+bool UnderLow4=true;
+bool AboveHigh5=true;
+bool UnderLow5=true;
+
+double High1,Low1,Spread1;
+double High2,Low2,Spread2;
+double High3,Low3,Spread3;
+double High4,Low4,Spread4;
+double High5,Low5,Spread5;
+
+bool target1=false;
+bool target2=false;
+bool target3=false;
+bool target4=false;
+bool target5=false;
+
+ulong TicketNumber1=-1;
+ulong TicketNumber2=-1;
+ulong TicketNumber3=-1;
+ulong TicketNumber4=-1;
+ulong TicketNumber5=-1;
+
+//double CandleRange=0;
+
+bool skipRange1=false;
+bool skipRange2=false;
+bool skipRange3=false;
+bool skipRange4=false;
+bool skipRange5=false;
+//counter inchidere Long si Short Trail SL
+int modSL=0;
+int modSLS=0;
+int modTSL=0;
+int modTSLS=0;
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+int OnInit()
+  {
+
+   trade.SetExpertMagicNumber(InpMagicNumber);
+   return(INIT_SUCCEEDED);
+  }
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+  {
+
+
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void  OnChartEvent(const int       id,       const long&     lparam,    const double&   dparam,   const string&   sparam)
+  {
+   if(id==CHARTEVENT_KEYDOWN)
+     {
+      //Print(id, lparam, dparam);
+      if(lparam==KEY_X)
+        {
+         CloseAllPositions();
+        }
+     }
+
+   if(id==CHARTEVENT_KEYDOWN)
+     {
+      //Print(lparam);
+      if(lparam==KEY_H)
+        {
+        //double halfvolume;
+         for(int i=0; i<CountOpenPositions(); i++)
+           {
+            ulong currticket=PositionGetTicket(i);
+            ulong magicnumber=PositionGetInteger(POSITION_MAGIC);
+            if(PositionSelectByTicket(currticket))
+              {
+               if(PositionGetDouble(POSITION_VOLUME)>0.01)
+                 {
+                  if(InpMagicNumber==magicnumber)
+                    {
+                     double currvolume=PositionGetDouble(POSITION_VOLUME);
+                     if(InpTradingInstrument==TRADING_INDICES)
+                       {
+                       Print("HEYY");
+                        double halfvolume=NormalizeDouble((currvolume/2),1);
+                        trade.PositionClosePartial(currticket,halfvolume,-1);
+                       }
+                     else
+                       {
+                        
+                        double halfvolume=NormalizeDouble((currvolume/2),2);
+                        
+                        trade.PositionClosePartial(currticket,halfvolume,-1);
+                       }
+                     
+                    }
+                 }
+              }
+           }
+        }
+     }
+   if(id==CHARTEVENT_KEYDOWN)
+     {
+      double current_TP;
+      if(lparam==KEY_E)
+        {
+         for(int i=0; i<CountOpenPositions(); i++)
+           {
+            ulong currticket=PositionGetTicket(i);
+            ulong magicnumber=PositionGetInteger(POSITION_MAGIC);
+            if(PositionSelectByTicket(currticket))
+              {
+               if(InpMagicNumber==magicnumber)
+                 {
+                  if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY)
+                    {
+                     double BreakEvenValueLong=High1+(lastTick.ask-lastTick.bid)+InpPuffer*_Point+InpPufferBreakEven*_Point;
+                     PositionGetDouble(POSITION_TP,current_TP);
+                     trade.PositionModify(currticket,BreakEvenValueLong,current_TP);
+                    }
+                  if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_SELL)
+                    {
+                     double BreakEvenValueShort=Low1-(lastTick.ask-lastTick.bid)-InpPuffer*_Point-InpPufferBreakEven*_Point;
+                     PositionGetDouble(POSITION_TP,current_TP);
+                     trade.PositionModify(currticket,BreakEvenValueShort,current_TP);
+                    }
+                 }
+              }
+           }
+        }
+     }
+  }
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+  {
+   prevTick=lastTick;
+   SymbolInfoTick(_Symbol,lastTick);
+
+
+//Time
+
+   datetime LocalTime=TimeLocal();
+
+   MqlDateTime DateTimeStructure,DateTimeTarget1,DateTimeTarget2,DateTimeTarget3,DateTimeTarget4,DateTimeTarget5;
+
+   DateTimeStructure.hour=InpStartTimeHour;
+   datetime timeStart=StructToTime(DateTimeStructure);
+
+   DateTimeStructure.hour=InpEndTimeHour;
+   datetime timeEnd=StructToTime(DateTimeStructure);
+   TimeCurrent(DateTimeStructure);
+   TimeCurrent(DateTimeTarget1);
+   TimeCurrent(DateTimeTarget2);
+   TimeCurrent(DateTimeTarget3);
+   TimeCurrent(DateTimeTarget4);
+   TimeCurrent(DateTimeTarget5);
+
+   DateTimeStructure.sec=0;
+   DateTimeTarget1.sec=0;
+   DateTimeTarget2.sec=0;
+   DateTimeTarget3.sec=0;
+   DateTimeTarget4.sec=0;
+   DateTimeTarget5.sec=0;
+
+   TimeToStruct(LocalTime,DateTimeStructure);
+   TimeToStruct(LocalTime,DateTimeTarget1);
+   TimeToStruct(LocalTime,DateTimeTarget2);
+   TimeToStruct(LocalTime,DateTimeTarget3);
+   TimeToStruct(LocalTime,DateTimeTarget4);
+   TimeToStruct(LocalTime,DateTimeTarget5);
+
+   int stepTime=PeriodSeconds(PERIOD_CURRENT);
+
+//First Target Candle
+   DateTimeTarget1.hour=InpTargetCandleHour1;
+   DateTimeTarget1.min=InpTargetCandleMin1;
+   DateTimeTarget1.sec=0;
+   datetime timeCandleStart1=StructToTime(DateTimeTarget1);
+   datetime timeCandleEnd1=timeCandleStart1+stepTime;
+
+//Second Target Candle
+   DateTimeTarget2.hour=InpTargetCandleHour2;
+   DateTimeTarget2.min=InpTargetCandleMin2;
+   DateTimeTarget2.sec=0;
+   datetime timeCandleStart2=StructToTime(DateTimeTarget2);
+   datetime timeCandleEnd2=timeCandleStart2+stepTime;
+
+//Third Target Candle
+   DateTimeTarget3.hour=InpTargetCandleHour3;
+   DateTimeTarget3.min=InpTargetCandleMin3;
+   datetime timeCandleStart3=StructToTime(DateTimeTarget3);
+   datetime timeCandleEnd3=timeCandleStart3+stepTime;
+
+//Forth Target Candle
+   DateTimeTarget4.hour=InpTargetCandleHour4;
+   DateTimeTarget4.min=InpTargetCandleMin4;
+   datetime timeCandleStart4=StructToTime(DateTimeTarget4);
+   datetime timeCandleEnd4=timeCandleStart4+stepTime;
+
+//Fifth Target Candle
+   DateTimeTarget5.hour=InpTargetCandleHour5;
+   DateTimeTarget5.min=InpTargetCandleMin5;
+   datetime timeCandleStart5=StructToTime(DateTimeTarget5);
+   datetime timeCandleEnd5=timeCandleStart5+stepTime;
+
+   datetime currentCandleStart=iTime(_Symbol,PERIOD_CURRENT,0);
+   datetime currentCandleEnd=currentCandleStart+stepTime;
+//Min & Max Range Calculation
+
+   bool isTime = TimeCurrent() > timeStart && TimeCurrent() <timeEnd && InpTimeFilter==true; //se afla in range
+   if(isTime==true)
+     {
+      if(InpTargetCandleUse1==true && timeCandleStart1<=currentCandleStart && currentCandleEnd<=timeCandleStart2)
+        {
+         IBG_Candle(timeCandleStart1,timeCandleEnd1);
+
+        }
+      if(InpTargetCandleUse2==true && timeCandleStart2<=currentCandleStart && currentCandleEnd<=timeCandleStart3)
+        {
+         IBG_Candle(timeCandleStart2,timeCandleEnd2);
+
+        }
+      if(InpTargetCandleUse3==true && timeCandleStart3<=currentCandleStart && currentCandleEnd<=timeCandleStart4)
+        {
+         IBG_Candle(timeCandleStart3,timeCandleEnd3);
+
+        }
+      if(InpTargetCandleUse4==true && timeCandleStart4<=currentCandleStart && currentCandleEnd<=timeCandleStart5)
+        {
+         IBG_Candle(timeCandleStart4,timeCandleEnd4);
+
+        }
+      if(InpTargetCandleUse5==true && timeCandleStart5<=currentCandleStart)
+        {
+         IBG_Candle(timeCandleStart5,timeCandleEnd5);
+
+        }
+     }
+  }
+
+//Target Candle 1  && delete lines after close positions
+void IBG_Candle(datetime timeStart, datetime timeEnd)
+  {
+   int stepTime=PeriodSeconds(PERIOD_CURRENT);
+   datetime currentCandleStart=iTime(_Symbol,PERIOD_CURRENT,0);
+   datetime currentCandleEnd=currentCandleStart+stepTime;
+
+   if(InpTargetCandleUse1==true && timeStart<=currentCandleStart && currentCandleEnd<=timeEnd)
+     {
+      Spread1=iSpread(_Symbol,PERIOD_CURRENT,0)*_Point;
+      High1=iHigh(_Symbol,PERIOD_CURRENT,0)+InpPuffer*_Point;
+      Low1=iLow(_Symbol,PERIOD_CURRENT,0)-InpPuffer*_Point;
+      skipRange1=false;
+      int High_Range=ObjectCreate(0,"High_Range",OBJ_HLINE,0,timeStart,High1);
+      int Low_Range=ObjectCreate(0,"Low_Range",OBJ_HLINE,0,timeStart,Low1);
+      ObjectSetInteger(0, "High_Range", OBJPROP_COLOR, clrDimGray);
+      ObjectSetInteger(0, "Low_Range", OBJPROP_COLOR, clrDimGray);
+      ObjectSetInteger(0,"High_Range",OBJPROP_STYLE, STYLE_DOT);
+      ObjectSetInteger(0,"Low_Range",OBJPROP_STYLE, STYLE_DOT);
+      int myRectangle;
+      myRectangle = ObjectCreate(0, "MyRectangle", OBJ_RECTANGLE,0,timeStart-stepTime,High1,timeEnd,Low1);
+      ObjectSetInteger(0, "MyRectangle", OBJPROP_COLOR, clrGold); // Set rectangle color
+      ObjectSetInteger(0, "MyRectangle", OBJPROP_FILL, clrGold); // Fill the rectangle
+      ObjectSetInteger(0, "MyRectangle", OBJPROP_BACK, clrGold); // Fill the rectangle
+      ChartRedraw();
+      //Long
+      ObjectCreate(0,"Tp_Long1",OBJ_HLINE,0,timeStart,High1+InpTargetLong1*_Point);
+      ObjectCreate(0,"Tp_Long2",OBJ_HLINE,0,timeStart,High1+InpTargetLong2*_Point);
+      ObjectCreate(0,"Tp_Long3",OBJ_HLINE,0,timeStart,High1+InpTargetLong3*_Point);
+      ObjectCreate(0,"Tp_Long4",OBJ_HLINE,0,timeStart,High1+InpTargetLong4*_Point);
+      ObjectCreate(0,"Tp_Long5",OBJ_HLINE,0,timeStart,High1+InpTargetLong5*_Point);
+      ObjectSetInteger(0, "Tp_Long1", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long1", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long2", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long2", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long3", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long3", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long4", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long4", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long5", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Long5", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      //Short
+      ObjectCreate(0,"Tp_Short1",OBJ_HLINE,0,timeStart,Low1-InpTargetShort1*_Point);
+      ObjectCreate(0,"Tp_Short2",OBJ_HLINE,0,timeStart,Low1-InpTargetShort2*_Point);
+      ObjectCreate(0,"Tp_Short3",OBJ_HLINE,0,timeStart,Low1-InpTargetShort3*_Point);
+      ObjectCreate(0,"Tp_Short4",OBJ_HLINE,0,timeStart,Low1-InpTargetShort4*_Point);
+      ObjectCreate(0,"Tp_Short5",OBJ_HLINE,0,timeStart,Low1-InpTargetShort5*_Point);
+      ObjectSetInteger(0, "Tp_Short1", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short1", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short2", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short2", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short3", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short3", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short4", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short4", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short5", OBJPROP_STYLE, STYLE_DOT); // Set rectangle color
+      ObjectSetInteger(0, "Tp_Short5", OBJPROP_COLOR, clrDimGray); // Set rectangle color
+      UnderLow1=false;
+      AboveHigh1=false;
+      modSL=0;
+      modSLS=0;
+      modTSL=0;
+     }
+   else
+     {
+      double CandleRange=(High1-Low1);
+      if(InpRangeMinMax==true)
+        {
+         if(CandleRange<InpMinCandleRange*_Point)
+           {
+            skipRange1=true;
+           }
+         if(CandleRange>InpMaxCandleRange*_Point)
+           {
+            skipRange1=true;
+           }
+        }
+
+      //Set Long Positions //16678
+      if(skipRange1==false && lastTick.ask>=High1 && AboveHigh1==false)
+        {
+         if(InpLotMode==LOT_MODE_MONEY || InpLotMode==LOT_MODE_PROCENT)
+           {
+            CalculateLots(Lot1,High1-Low1,InpLot1);
+            CalculateLots(Lot2,High1-Low1,InpLot2);
+            CalculateLots(Lot3,High1-Low1,InpLot3);
+            CalculateLots(Lot4,High1-Low1,InpLot4);
+            CalculateLots(Lot5,High1-Low1,InpLot5);
+           }
+
+         if(InpTargetCandleUse1==true)
+           {
+
+            trade.Buy(Lot1,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong1*_Point,"Target1 && BUY1");
+            TicketNumber1=trade.ResultOrder();
+            trade.Buy(Lot2,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong2*_Point,"Target1 && BUY2");
+            TicketNumber1=trade.ResultOrder();
+            trade.Buy(Lot3,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong3*_Point,"Target1 && BUY3");
+            TicketNumber1=trade.ResultOrder();
+            trade.Buy(Lot4,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong4*_Point,"Target1 && BUY4");
+            TicketNumber1=trade.ResultOrder();
+            trade.Buy(Lot5,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong5*_Point,"Target1 && BUY5");
+            TicketNumber1=trade.ResultOrder();
+            AboveHigh1=true;
+           }
+         else
+            if(InpTargetCandleUse2==true)
+              {
+               trade.Buy(Lot1,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong1*_Point,"Target1 && BUY1");
+               TicketNumber1=trade.ResultOrder();
+               trade.Buy(Lot2,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong2*_Point,"Target1 && BUY2");
+               TicketNumber1=trade.ResultOrder();
+               trade.Buy(Lot3,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong3*_Point,"Target1 && BUY3");
+               TicketNumber1=trade.ResultOrder();
+               trade.Buy(Lot4,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong4*_Point,"Target1 && BUY4");
+               TicketNumber1=trade.ResultOrder();
+               trade.Buy(Lot5,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong5*_Point,"Target1 && BUY5");
+               TicketNumber1=trade.ResultOrder();
+               AboveHigh1=true;
+              }
+            else
+               if(InpTargetCandleUse3==true)
+                 {
+                  trade.Buy(Lot1,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong1*_Point,"Target1 && BUY1");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Buy(Lot2,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong2*_Point,"Target1 && BUY2");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Buy(Lot3,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong3*_Point,"Target1 && BUY3");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Buy(Lot4,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong4*_Point,"Target1 && BUY4");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Buy(Lot5,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong5*_Point,"Target1 && BUY5");
+                  TicketNumber1=trade.ResultOrder();
+                  AboveHigh1=true;
+                 }
+               else
+                  if(InpTargetCandleUse4==true)
+                    {
+                     trade.Buy(Lot1,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong1*_Point,"Target1 && BUY1");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Buy(Lot2,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong2*_Point,"Target1 && BUY2");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Buy(Lot3,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong3*_Point,"Target1 && BUY3");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Buy(Lot4,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong4*_Point,"Target1 && BUY4");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Buy(Lot5,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong5*_Point,"Target1 && BUY5");
+                     TicketNumber1=trade.ResultOrder();
+                     AboveHigh1=true;
+                    }
+                  else
+                     if(InpTargetCandleUse5==true)
+                       {
+                        trade.Buy(Lot1,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong1*_Point,"Target1 && BUY1");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Buy(Lot2,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong2*_Point,"Target1 && BUY2");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Buy(Lot3,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong3*_Point,"Target1 && BUY3");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Buy(Lot4,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong4*_Point,"Target1 && BUY4");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Buy(Lot5,NULL,lastTick.ask,Low1,lastTick.ask+InpTargetLong5*_Point,"Target1 && BUY5");
+                        TicketNumber1=trade.ResultOrder();
+                        AboveHigh1=true;
+                       }
+         AboveHigh1=true;
+        }
+
+      //Set Short Positiions
+      if(skipRange1==false && lastTick.bid<=Low1 && UnderLow1==false)
+        {
+         if(InpLotMode==LOT_MODE_MONEY || InpLotMode==LOT_MODE_PROCENT)
+           {
+            CalculateLots(Lot1,High1-Low1,InpLot1);
+            CalculateLots(Lot2,High1-Low1,InpLot2);
+            CalculateLots(Lot3,High1-Low1,InpLot3);
+            CalculateLots(Lot4,High1-Low1,InpLot4);
+            CalculateLots(Lot5,High1-Low1,InpLot5);
+           }
+
+         if(InpTargetCandleUse1==true)
+           {
+            trade.Sell(Lot1,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort1*_Point,"Target1 && SELL1");
+            TicketNumber1=trade.ResultOrder();
+            trade.Sell(Lot2,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort2*_Point,"Target1 && SELL2");
+            TicketNumber1=trade.ResultOrder();
+            trade.Sell(Lot3,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort3*_Point,"Target1 && SELL3");
+            TicketNumber1=trade.ResultOrder();
+            trade.Sell(Lot4,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort4*_Point,"Target1 && SELL4");
+            TicketNumber1=trade.ResultOrder();
+            trade.Sell(Lot5,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort5*_Point,"Target1 && SELL5");
+            TicketNumber1=trade.ResultOrder();
+            UnderLow1=true;
+
+           }
+         else
+            if(InpTargetCandleUse2==true)
+              {
+               trade.Sell(Lot1,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort1*_Point,"Target1 && SELL1");
+               TicketNumber1=trade.ResultOrder();
+               trade.Sell(Lot2,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort2*_Point,"Target1 && SELL2");
+               TicketNumber1=trade.ResultOrder();
+               trade.Sell(Lot3,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort3*_Point,"Target1 && SELL3");
+               TicketNumber1=trade.ResultOrder();
+               trade.Sell(Lot4,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort4*_Point,"Target1 && SELL4");
+               TicketNumber1=trade.ResultOrder();
+               trade.Sell(Lot5,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort5*_Point,"Target1 && SELL5");
+               TicketNumber1=trade.ResultOrder();
+               UnderLow1=true;
+
+              }
+            else
+               if(InpTargetCandleUse3==true)
+                 {
+                  trade.Sell(Lot1,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort1*_Point,"Target1 && SELL1");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Sell(Lot2,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort2*_Point,"Target1 && SELL2");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Sell(Lot3,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort3*_Point,"Target1 && SELL3");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Sell(Lot4,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort4*_Point,"Target1 && SELL4");
+                  TicketNumber1=trade.ResultOrder();
+                  trade.Sell(Lot5,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort5*_Point,"Target1 && SELL5");
+                  TicketNumber1=trade.ResultOrder();
+                  UnderLow1=true;
+                 }
+               else
+                  if(InpTargetCandleUse4==true)
+                    {
+                     trade.Sell(Lot1,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort1*_Point,"Target1 && SELL1");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Sell(Lot2,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort2*_Point,"Target1 && SELL2");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Sell(Lot3,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort3*_Point,"Target1 && SELL3");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Sell(Lot4,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort4*_Point,"Target1 && SELL4");
+                     TicketNumber1=trade.ResultOrder();
+                     trade.Sell(Lot5,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort5*_Point,"Target1 && SELL5");
+                     TicketNumber1=trade.ResultOrder();
+                     UnderLow1=true;
+                    }
+                  else
+                     if(InpTargetCandleUse5==true)
+                       {
+                        trade.Sell(Lot1,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort1*_Point,"Target1 && SELL1");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Sell(Lot2,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort2*_Point,"Target1 && SELL2");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Sell(Lot3,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort3*_Point,"Target1 && SELL3");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Sell(Lot4,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort4*_Point,"Target1 && SELL4");
+                        TicketNumber1=trade.ResultOrder();
+                        trade.Sell(Lot5,NULL,lastTick.bid,High1,lastTick.bid-InpTargetShort5*_Point,"Target1 && SELL5");
+                        TicketNumber1=trade.ResultOrder();
+                        UnderLow1=true;
+                       }
+         UnderLow1=true;
+        }
+     }
+
+//Trail
+   if(modSL==0)
+     {
+      CheckTrailingStop(lastTick.bid,High1,Low1,InpTriggerTSL);
+     }
+   else
+      if(modSL==1 && InpStepTSL!=0)
+        {
+         CheckTrailingStop(lastTick.bid,High1,Low1,InpStepTSL);
+        }
+   if(modSLS==0)
+     {
+      CheckTrailingStopS(lastTick.ask,High1,Low1,InpTriggerTSL);
+     }
+   else
+      if(modSLS==1 && InpStepTSL!=0)
+        {
+         CheckTrailingStopS(lastTick.ask,High1,Low1,InpStepTSL);
+        }
+
+
+   if(InpBreakevenType==true && modSL==0)
+     {
+      BreakEven(High1,Low1);
+     }
+   if(InpBreakevenType==true && modSLS==0)
+     {
+      BreakEvenS(High1,Low1);
+     }
+
+   double Account_Profit=AccountInfoDouble(ACCOUNT_PROFIT);
+   if(InpTakeProfitMode==true && Account_Profit>=InpTakeProfitAll)
+     {
+      CloseAllPositions();
+
+     }
+   if(InpStopLossMode==true && InpStopLossAll*(-1)>=Account_Profit)
+     {
+      CloseAllPositions();
+
+     }
+
+  }
+//breakEven function
+void BreakEven(double high, double low)
+  {
+   ulong magicnumber;
+   double BreakEvenLong=high+(lastTick.ask-lastTick.bid)+InpBreakevenValue*_Point;
+   double BreakEvenValueLong=high+(lastTick.ask-lastTick.bid)+InpPuffer*_Point+InpPufferBreakEven*_Point;
+   if(lastTick.ask>BreakEvenLong)
+     {
+      for(int i=0; i<CountOpenPositions(); i++)
+        {
+         ulong ticket=PositionGetTicket(i);
+         PositionGetInteger(POSITION_MAGIC,magicnumber);
+         if(magicnumber==InpMagicNumber)
+           {
+            trade.PositionModify(ticket,BreakEvenValueLong,PositionGetDouble(POSITION_TP));
+           }
+        }
+     }
+
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void BreakEvenS(double high, double low)
+  {
+   ulong magicnumber;
+   double BreakEvenShort=low-(lastTick.ask-lastTick.bid)-InpBreakevenValue*_Point;
+   double BreakEvenValueShort=low-(lastTick.ask-lastTick.bid)-InpPuffer*_Point-InpPufferBreakEven*_Point;
+   if(lastTick.bid<BreakEvenShort)
+     {
+      for(int i=0; i<CountOpenPositions(); i++)
+        {
+         ulong ticket=PositionGetTicket(i);
+         PositionGetInteger(POSITION_MAGIC,magicnumber);
+         if(magicnumber==InpMagicNumber)
+           {
+            trade.PositionModify(ticket,BreakEvenValueShort,PositionGetDouble(POSITION_TP));
+           }
+
+        }
+     }
+
+  }
+//calculatelots
+double CalculateLots(double &lots, double slDistance,double InpLot)
+  {
+   double minLot=SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MIN);
+   double maxLot=SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_MAX);
+   lots=0.0;
+   if(InpLotMode==LOT_MODE_FIXED)
+     {
+      lots=InpLot;
+     }
+   else
+     {
+      double tickSize=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE);
+      double tickValue=SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_VALUE);
+      double volumeStep=SymbolInfoDouble(_Symbol,SYMBOL_VOLUME_STEP);
+
+      double riskMoney= InpLotMode==LOT_MODE_MONEY ? InpLot : AccountInfoDouble(ACCOUNT_BALANCE)*InpLot*0.01;
+      double moneyVolumeStep= (slDistance/tickSize) * tickValue *volumeStep;
+
+      lots=MathFloor(riskMoney/moneyVolumeStep)*volumeStep;
+     }
+   if(InpTradingInstrument==TRADING_FOREX)
+     {
+      lots=NormalizeDouble(lots,2);
+
+      if(lots<minLot)
+        {
+         lots=minLot;
+        }
+      if(lots>maxLot)
+        {
+         lots=maxLot;
+        }
+     }
+   if(InpTradingInstrument==TRADING_INDICES)
+     {
+      lots=NormalizeDouble(lots,1);
+
+      if(lots<minLot)
+        {
+         lots=minLot;
+        }
+      if(lots>maxLot)
+        {
+         lots=maxLot;
+        }
+
+     }
+
+   return lots;
+
+  }
+
+//Count Open Pos
+int CountOpenPositions()
+  {
+   int counter=0;
+   int total=PositionsTotal();
+   for(int i=total-1; i>=0; i--)
+     {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket<=0)
+        {
+         Print("Failed to get position ticket");
+         return -1;
+        }
+      if(!PositionSelectByTicket(ticket))
+        {
+         Print("Failed to select position by ticket");
+         return -1;
+        }
+      ulong magicnumber;
+      if(!PositionGetInteger(POSITION_MAGIC,magicnumber))
+        {
+         Print("Failed to get magicnumber");
+         return -1;
+        }
+      if(InpMagicNumber==magicnumber)
+        {
+         counter++;
+        }
+     }
+   return counter;
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void CloseAllPositions()
+  {
+   for(int i=CountOpenPositions(); i>=0; i--)
+     {
+      ulong magicnumber;
+      ulong ticket=PositionGetTicket(i);//get ticket
+      if(PositionSelectByTicket(ticket))
+        {
+         magicnumber=PositionGetInteger(POSITION_MAGIC);
+         if(InpMagicNumber==magicnumber)
+           {
+            trade.PositionClose(ticket,i);//close
+           }
+        }
+     }
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void CheckTrailingStop(double price, double high,double low, double trigger)
+  {
+//double stopLossLong=NormalizeDouble(price+InpTriggerTSL*_Point-InpTSLPoint*_Point,_Digits);
+
+//Print("Hey");
+   for(int i=0; i<CountOpenPositions(); i++)
+     {
+      ulong ticket= PositionGetTicket(i);
+      if(PositionSelectByTicket(ticket))
+        {
+         if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY)
+           {
+            ulong magicnumber= PositionGetInteger(POSITION_MAGIC);
+            if(magicnumber==InpMagicNumber)
+              {
+               double current_SL=PositionGetDouble(POSITION_SL);
+               double current_TP=PositionGetDouble(POSITION_TP);
+
+               // Check if the current price is greater than the trigger price
+               if(price > high+trigger*_Point)
+                 {
+                  double newStopLoss = price-InpTSLPoint*_Point;
+
+                  // Adjust the stop loss only if it's better than the current one
+                  if(newStopLoss > current_SL || current_SL == 0)
+                    {
+                     trade.PositionModify(ticket,price-InpTSLPoint*_Point,current_TP);
+                     modSL=1;
+                    }
+                 }
+
+              }
+           }
+
+        }
+     }
+
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void CheckTrailingStopS(double price1, double high, double low,double trigger)
+  {
+   for(int i=0; i<CountOpenPositions(); i++)
+     {
+      ulong ticket= PositionGetTicket(i);
+      if(PositionSelectByTicket(ticket))
+        {
+         if(PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_SELL)
+           {
+            ulong magicnumber= PositionGetInteger(POSITION_MAGIC);
+            if(magicnumber==InpMagicNumber)
+              {
+               double current_SL=PositionGetDouble(POSITION_SL);
+               double current_TP=PositionGetDouble(POSITION_TP);
+
+               // Check if the current price is greater than the trigger price
+               if(price1 < low-trigger*_Point)
+                 {
+                  double newStopLoss = price1+InpTSLPoint*_Point;
+
+                  // Adjust the stop loss only if it's better than the current one
+                  if(newStopLoss < current_SL || current_SL == 0)
+                    {
+                     trade.PositionModify(ticket,price1+InpTSLPoint*_Point,current_TP);
+                     modSLS=1;
+                    }
+                 }
+
+              }
+           }
+
+        }
+     }
+
+  }
+//+------------------------------------------------------------------+
