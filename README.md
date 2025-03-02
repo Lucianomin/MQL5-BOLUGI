@@ -1,3 +1,67 @@
+# MQL5-BOLUGI - Sistem Automatizat de Tranzacționare
+
+## Prezentare Generală
+**MQL5-BOLUGI** este un Expert Advisor (EA) pentru platforma MetaTrader 5 (MT5), dezvoltat pentru automatizarea strategiilor de tranzacționare. Acesta utilizează analiza benzilor Bollinger pentru a identifica oportunități de cumpărare și vânzare pe piețele financiare.
+
+## Funcționalități
+- **Tranzacționare Automată** – Deschide și închide poziții în mod automat conform regulilor prestabilite
+- **Analiză Tehnică** – Utilizează benzile Bollinger pentru a detecta volatilitatea pieței
+- **Managementul Riscului** – Setări configurabile pentru Stop Loss, Take Profit și Lot Size
+- **Optimizare și Personalizare** – Parametri ajustabili pentru adaptarea la diferite condiții de piață
+- **Jurnalizare și Statistici** – Monitorizează performanța tranzacțiilor în timp real
+
+## Tehnologii Utilizate
+- **Limbaj:** MQL5
+- **Platformă:** MetaTrader 5 (MT5)
+- **Indicatori:** Benzile Bollinger, RSI, Moving Averages (după caz)
+- **Gestionare Riscuri:** Configurații pentru poziții sigure și scalabile
+
+## Instalare și Configurare
+1. **Descărcare și Adăugare EA în MT5**
+   ```sh
+   git clone https://github.com/Lucianomin/MQL5-BOLUGI.git
+   ```
+2. **Copierea fișierului EA în MetaTrader 5**
+   - Deschide MetaTrader 5
+   - Mergi la **File → Open Data Folder**
+   - Navighează la `MQL5/Experts/`
+   - Copiază fișierul `.mq5` în acest director
+3. **Compilare EA**
+   - Deschide **MetaEditor** din MT5
+   - Navighează la `MQL5/Experts/MQL5-BOLUGI.mq5`
+   - Apasă `Compile`
+4. **Adăugare pe un Grafic**
+   - Deschide un grafic pe perechea valutară dorită
+   - Adaugă EA-ul din tab-ul **Navigator → Expert Advisors**
+   - Activează tranzacționarea automată
+
+## 🔧 Configurare Parametri
+- **Lot Size** – Volumul tranzacției
+- **Take Profit** – Pragul de profit la care se închide automat poziția
+- **Stop Loss** – Pragul de pierdere maxim acceptat
+- **Indicatori Bollinger** – Setări de configurare pentru volatilitate
+- **Timeframe Recomandat** – 15m, 1H, 4H (în funcție de strategie)
+
+## Strategie de Tranzacționare
+MQL5-BOLUGI utilizează benzile Bollinger pentru a determina **supracumpărarea** și **supravânzarea** pieței:
+- **Semnal de CUMPĂRARE** : Prețul atinge banda inferioară a Bollinger și se confirmă cu RSI
+- **Semnal de VÂNZARE** : Prețul atinge banda superioară și este confirmat de RSI sau alte filtre
+
+## Roadmap
+- [ ] Implementare trailing stop pentru optimizarea profitului
+- [ ] Adăugare funcție de hedging pentru protecția împotriva mișcărilor adverse
+- [ ] Integrare AI pentru ajustarea automată a parametrilor
+
+## Contribuții
+Orice contribuție este binevenită! 
+
+## Contact
+Pentru întrebări sau colaborări:
+- **GitHub**: [Lucianomin](https://github.com/Lucianomin)
+- **Email**: minda.lucian@yahoo.com
+## Detalii funcitonare mai jos
+
+
 # MQL5-Project
 Inputs+complementare+Mediere
 Learning MQL%
@@ -262,64 +326,4 @@ if(ask<=PriceStartM)
 12
 
 
-# MQL5-BOLUGI - Sistem Automatizat de Tranzacționare
 
-## Prezentare Generală
-**MQL5-BOLUGI** este un Expert Advisor (EA) pentru platforma MetaTrader 5 (MT5), dezvoltat pentru automatizarea strategiilor de tranzacționare. Acesta utilizează analiza benzilor Bollinger pentru a identifica oportunități de cumpărare și vânzare pe piețele financiare.
-
-## Funcționalități
-- **Tranzacționare Automată** – Deschide și închide poziții în mod automat conform regulilor prestabilite
-- **Analiză Tehnică** – Utilizează benzile Bollinger pentru a detecta volatilitatea pieței
-- **Managementul Riscului** – Setări configurabile pentru Stop Loss, Take Profit și Lot Size
-- **Optimizare și Personalizare** – Parametri ajustabili pentru adaptarea la diferite condiții de piață
-- **Jurnalizare și Statistici** – Monitorizează performanța tranzacțiilor în timp real
-
-## Tehnologii Utilizate
-- **Limbaj:** MQL5
-- **Platformă:** MetaTrader 5 (MT5)
-- **Indicatori:** Benzile Bollinger, RSI, Moving Averages (după caz)
-- **Gestionare Riscuri:** Configurații pentru poziții sigure și scalabile
-
-## Instalare și Configurare
-1. **Descărcare și Adăugare EA în MT5**
-   ```sh
-   git clone https://github.com/Lucianomin/MQL5-BOLUGI.git
-   ```
-2. **Copierea fișierului EA în MetaTrader 5**
-   - Deschide MetaTrader 5
-   - Mergi la **File → Open Data Folder**
-   - Navighează la `MQL5/Experts/`
-   - Copiază fișierul `.mq5` în acest director
-3. **Compilare EA**
-   - Deschide **MetaEditor** din MT5
-   - Navighează la `MQL5/Experts/MQL5-BOLUGI.mq5`
-   - Apasă `Compile`
-4. **Adăugare pe un Grafic**
-   - Deschide un grafic pe perechea valutară dorită
-   - Adaugă EA-ul din tab-ul **Navigator → Expert Advisors**
-   - Activează tranzacționarea automată
-
-## 🔧 Configurare Parametri
-- **Lot Size** – Volumul tranzacției
-- **Take Profit** – Pragul de profit la care se închide automat poziția
-- **Stop Loss** – Pragul de pierdere maxim acceptat
-- **Indicatori Bollinger** – Setări de configurare pentru volatilitate
-- **Timeframe Recomandat** – 15m, 1H, 4H (în funcție de strategie)
-
-## Strategie de Tranzacționare
-MQL5-BOLUGI utilizează benzile Bollinger pentru a determina **supracumpărarea** și **supravânzarea** pieței:
-- **Semnal de CUMPĂRARE** : Prețul atinge banda inferioară a Bollinger și se confirmă cu RSI
-- **Semnal de VÂNZARE** : Prețul atinge banda superioară și este confirmat de RSI sau alte filtre
-
-## Roadmap
-- [ ] Implementare trailing stop pentru optimizarea profitului
-- [ ] Adăugare funcție de hedging pentru protecția împotriva mișcărilor adverse
-- [ ] Integrare AI pentru ajustarea automată a parametrilor
-
-## Contribuții
-Orice contribuție este binevenită! 
-
-## Contact
-Pentru întrebări sau colaborări:
-- **GitHub**: [Lucianomin](https://github.com/Lucianomin)
-- **Email**: minda.lucian@yahoo.com
